@@ -467,7 +467,7 @@ void DDAModel::reset_E(){
     }
 }
 
-void DDAModel::UpdateAlpha() {
+void DDAModel::UpdateAlpha() { 
 
     VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
     VectorXcd* material = (*Core).get_material();

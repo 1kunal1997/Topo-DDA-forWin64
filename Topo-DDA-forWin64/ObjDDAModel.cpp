@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "ObjDDAModel.h"
+#include "math.h"
 
 double SmoothDensity(double input, double ita, double beta) {
     double result = 0.0;
@@ -41,7 +42,7 @@ ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, DDAModel *model_
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
     double K = (*Core).get_K();
-    E_sum = Vector3cd::Zero();                                                                             //是不是E_sum忘了加E_ext了？ It is actually in Rest.
+    E_sum = Vector3cd::Zero();                                                                             //脢脟虏禄脢脟E_sum脥眉脕脣录脫E_ext脕脣拢驴 It is actually in Rest.
     E_ext = Vector3cd::Zero();
     E_ext(0) = E0*n_E0(0)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
     E_ext(1) = E0*n_E0(1)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
@@ -49,7 +50,7 @@ ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, DDAModel *model_
     // cout << R(3*5444+2) << "this" << endl;
 }
 
-void ObjPointEDDAModel::SingleResponse(int idx, bool deduction){
+void ObjPointEDDAModel::SingleResponse(int idx, bool deduction, bool hasPenalty){
     //VectorXcd P = model->get_P();
     //VectorXi R = model->get_R();
     double rx=x-d*(*R)(3*idx);                  //R has no d in it, so needs to time d
@@ -70,6 +71,10 @@ void ObjPointEDDAModel::SingleResponse(int idx, bool deduction){
     }
 }
 
+void ObjPointEDDAModel::SingleResponseWithoutPenalty(int idx, bool deduction) {
+    
+}
+
 double ObjPointEDDAModel::GroupResponse(){
     /*if (Have_Penalty){
         return (E_sum).norm()-(*evomodel).L1Norm();
@@ -87,6 +92,10 @@ double ObjPointEDDAModel::GetVal(){
         // cout << E_sum(0) << endl;
     }
     return GroupResponse();
+}
+
+double ObjPointEDDAModel::GetValWithPenalty(double coeff) {
+    return 0.0;
 }
 
 void ObjPointEDDAModel::Reset(){
@@ -116,8 +125,13 @@ ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, DDAMod
     model = model_;
     //evomodel = evomodel_;
     AProductCore* Core = (*model).get_Core();
+    spaceparams = (*model).get_spacepara();
+    Params = (*spaceparams).get_Para();
     d = (*Core).get_d();
     N = (*Core).get_N();
+    Nx = (*Core).get_Nx();
+    Ny = (*Core).get_Ny();
+    Nz = (*Core).get_Nz();
     P = (*model).get_P();
     R = (*Core).get_R();
     al = (*model).get_al();
@@ -128,29 +142,137 @@ ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, DDAMod
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
     double K = (*Core).get_K();
+    penalty = 0.0;
     E_int = 0.0;
     // cout << R(3*5444+2) << "this" << endl;
+
+    namedebugfile = ".\\Squarecenter_4x4x1_it200_sym_eps0.1_penalty10\\debugfile.txt";
 }
 
-void ObjIntegratedEDDAModel::SingleResponse(int idx, bool deduction) {
+void ObjIntegratedEDDAModel::SingleResponse(int idx, bool deduction, bool hasPenalty) {
     //VectorXcd P = model->get_P();
     //VectorXi R = model->get_R();
+   // ofstream debug;
+   // debug.open(namedebugfile, std::ios_base::app);
+
     if ((xMin <= (*R)(3 * idx) <= xMax)&&(yMin <= (*R)(3 * idx + 1) <= yMax)&&(zMin <= (*R)(3 * idx + 2) <= zMax)) {
-        double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
+        // double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
+        double factor = 1.0;
+        double coeff = 10000.0;
+        //double penalty = pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2);
+       // debug << "haspenalty is "  << hasPenalty << "\n";
+       // cout << "adjusted index is: " << idx % Params->size() << endl;
+       // cout << "params size is: " << Params->size() << endl;
+       // debug << "single response entered, index is " << idx << "\n";
+       // debug << "the value of this pixel is: " << (*Params)(idx % Params->size()) << "\n";
+       // debug << "the value of the rounded pixel is: " << round((*Params)(idx % Params->size())) << "\n";
+       // debug << "penalty for this pixel is: " << pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2) << "\n";
+
+       /* 
+        cout << "single response entered, index is " << idx << endl;
+        cout << "the value of this pixel is: " << (*Params)(idx % Params->size()) << endl;
+        cout << "the value of the rounded pixel is: " << round((*Params)(idx % Params->size())) << endl;
+        cout << "penalty for this pixel is: " << pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2) << endl;
+        */
+
         if (deduction == false) {
-            E_int += factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum);
+            E_int += factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum); // - penalty(i)
             E_int += factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
             E_int += factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+           // E_int -= coeff * penalty;
+          //  E_int = fmax(1, E_int);
+
+          //  E_int += coeff * factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum); // - penalty(i)
+          //  E_int += coeff * factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+          //  E_int += coeff * factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+          //  E_int -= (1-coeff) * pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2);
+          // debug << "deduction is FALSE" << "\n";
+          // debug << "E_int is: " << E_int << "\n";
+
+          // cout << "deduction is FALSE" << endl;
+          // cout << "E_int is: " << E_int << endl;
         }
         else {
             E_int -= factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum);
             E_int -= factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
             E_int -= factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+           // E_int += coeff * penalty;
+           // E_int = fmax(1, E_int);
+
+           // E_int -= coeff * factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum);
+           // E_int -= coeff * factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+           // E_int -= coeff * factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+           // E_int += (1-coeff) * pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2);
+
+         //  cout << "deduction is TRUE" << endl;
+         //  cout << "E_int is: " << E_int << endl;
         }
+       // debug << "\n";
+       // cout << "\n" << endl;
     }
+   // debug.close();
     
     
     
+}
+
+void ObjIntegratedEDDAModel::SingleResponseWithoutPenalty(int idx, bool deduction) {
+    //VectorXcd P = model->get_P();
+    //VectorXi R = model->get_R();
+    //ofstream debug;
+    //debug.open(namedebugfile, std::ios_base::app);
+
+    if ((xMin <= (*R)(3 * idx) <= xMax) && (yMin <= (*R)(3 * idx + 1) <= yMax) && (zMin <= (*R)(3 * idx + 2) <= zMax)) {
+        // double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
+        double factor = 1;
+        //debug << "haspenalty is "  << hasPenalty << "\n";
+       // cout << "adjusted index is: " << idx % Params->size() << endl;
+       // cout << "params size is: " << Params->size() << endl;
+        //debug << "single response entered, index is " << idx << "\n";
+        //debug << "the value of this pixel is: " << (*Params)(idx % Params->size()) << "\n";
+        //debug << "the value of the rounded pixel is: " << round((*Params)(idx % Params->size())) << "\n";
+        //debug << "penalty for this pixel is: " << pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2) << "\n";
+        if (deduction == false) {
+            E_int += factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum); // - penalty(i)
+            E_int += factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+            E_int += factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+
+            //  E_int += coeff * factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum); // - penalty(i)
+            //  E_int += coeff * factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+            //  E_int += coeff * factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+            //  E_int -= (1-coeff) * pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2);
+             //debug << "deduction is FALSE" << "\n";
+             // debug << "E_int is: " << E_int << "\n";
+        }
+        else {
+            E_int -= factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum);
+            E_int -= factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+            E_int -= factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+
+            // E_int -= coeff * factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum);
+            // E_int -= coeff * factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+            // E_int -= coeff * factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+            // E_int += (1-coeff) * pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2);
+             //debug << "deduction is TRUE" << "\n";
+            // debug << "E_int is: " << E_int << "\n";
+        }
+        //debug << "\n";
+    }
+    //debug.close();
+
+
+
+}
+
+double ObjIntegratedEDDAModel::GroupResponseWithPenalty(double coeff) {
+    /*if (Have_Penalty){
+        return (E_sum).norm()-(*evomodel).L1Norm();
+    }*/
+    /*else{*/
+    double obj = fmax(1, E_int - coeff*penalty);
+    return log(obj);
+    /*}*/
+
 }
 
 double ObjIntegratedEDDAModel::GroupResponse() {
@@ -163,17 +285,33 @@ double ObjIntegratedEDDAModel::GroupResponse() {
 
 }
 
+double ObjIntegratedEDDAModel::GetValWithPenalty(double coeff) {
+    Reset(); // E_int = 0.0
+    for (int idx = 0; idx < N; idx++) {
+        double pixel = (*Params)(idx % Params->size());
+        penalty += pixel*(1 - pixel);
+        SingleResponse(idx, false);
+        // cout << E_sum(0) << endl;
+    }
+    cout << "N is: " << N << endl;
+    cout << "Penalty inside of ObjDDAModel is: " << penalty << endl;
+    cout << "Params size is: " << Params->size() << endl;
+    cout << "params at index 10: " << (*Params)(10) << endl;
+    return GroupResponseWithPenalty(coeff); // log(E_int)
+}
+
 double ObjIntegratedEDDAModel::GetVal() {
-    Reset();
+    Reset(); // E_int = 0.0
     for (int idx = 0; idx < N; idx++) {
         SingleResponse(idx, false);
         // cout << E_sum(0) << endl;
     }
-    return GroupResponse();
+    return GroupResponse(); // log(E_int)
 }
 
 void ObjIntegratedEDDAModel::Reset() {
     E_int = 0.0;
+    penalty = 0.0;
 }
 
 

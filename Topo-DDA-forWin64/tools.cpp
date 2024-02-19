@@ -64,6 +64,9 @@ pair<VectorXi, VectorXd> getInputStr(string pathCommonData, string pathPara) {
     fin1 >> Nytmp;
     fin1 >> Nztmp;
     fin1 >> Ntmp;
+    cout << "Nx is" << Nxtmp << endl;
+    cout << "Ny is" << Nytmp << endl;
+    cout << "Nz is" << Nztmp << endl;
     cout << "Input geometry size: " << Ntmp << endl;
     VectorXi geometrytmp = VectorXi::Zero(3 * Ntmp);
     for (int i = 0; i <= Ntmp - 1; i++) {
@@ -494,6 +497,7 @@ double initial_diel_func(double initial_diel) {
     }
 }
 
+// builds a 3*Nx*Ny*Nz vector for the position of each pixel. example: (0, 0, 0, 1, 0, 0, 2, 0, 0, ...)
 VectorXi build_a_bulk(int Nx, int Ny, int Nz){
     VectorXi result=VectorXi::Zero(3*Nx*Ny*Nz);
     for(int x=0;x<=Nx-1;x++){
@@ -774,18 +778,35 @@ vector<double> ReadLam(string input) {
 
 
 double exp_update(const double x, const double x_max, const double y_min, const double y_max) {
-    return y_min + (y_max - y_min) * exp((x / x_max - 1.0));
+    int base = 100;
+    return y_min + (y_max - y_min) * (pow(base, (x/x_max)) - 1) / (base - 1);
 }
 
 double piecewise_update(const double x, const double x_max, const double y_min, const double y_max) {
     if (x <= 0.5 * x_max) {
         return y_min;
     }
-    else if(0.5 * x_max < x&& x <= 0.7 * x_max) {
-        return y_min+(y_max-y_min)/20;
+    else if(0.5 * x_max < x && x <= 0.7 * x_max) {
+        return y_min + (y_max - y_min) / 5;
     }
     else if (0.7 * x_max < x && x <= 0.8 * x_max) {
-        return y_min + (y_max - y_min) / 10;
+        return y_min + (y_max - y_min) / 2.5;
+    }
+    else {
+        return y_max;
+    }
+
+}
+
+double piecewise_update_absolute(const double x, const double x_max, const double y_min, const double y_max) {
+    if (x <= 100) {
+        return y_min;
+    }
+    else if (100 < x && x <= 140) {
+        return y_min + (y_max - y_min) / 5;
+    }
+    else if (140 < x && x <= 160) {
+        return y_min + (y_max - y_min) / 2.5;
     }
     else {
         return y_max;
@@ -798,3 +819,14 @@ double linear_update(const double x, const double x_max, const double y_min, con
 }
 
 
+double calculatePenalty(VectorXd& parameters) {
+    double penalty = 0.0;
+   // double coeff = 10.0;
+    for (int i = 0; i < parameters.size(); i++) {
+        double pixel = parameters(i);
+        penalty += pixel*(1 - pixel);
+    }
+
+    return penalty;
+   
+}

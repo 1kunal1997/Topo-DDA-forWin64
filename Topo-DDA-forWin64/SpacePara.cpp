@@ -56,6 +56,7 @@ int Get3divSize(VectorXi* geometry) {
     return int(round(N / 3));
 }
 
+// return the geometry as a set of pixels, each pixel represented as a vector of 3 ints {[0,0,0], [1,0,0], ...}
 set<vector<int>> Get3divSet(VectorXi* geometry) {
     set<vector<int>> result;
     int N = Get3divSize(geometry);
@@ -118,6 +119,7 @@ bool CheckOverlapList(vector<VectorXi*> geometry) {
     return true;
 }
 
+// return 3*N vector of geometry. if multiple structures, connects them into one geometry vector 
 VectorXi ConnectGeometry(vector<VectorXi*> geometry) {
     if (!CheckOverlapList(geometry)) {
         cout << "CheckOverlapList Fail" << endl;
@@ -1084,6 +1086,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_
 
 }
 
+// HEEYO!
 SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_) {
     Filter = Filter_;
     space = space_;
@@ -1101,10 +1104,13 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
     }
 
     vector<Structure>* ln = (*space).get_ln();
+    cout << "ln size is: " << (*ln).size() << endl;         // should be just 1
+    cout << "ln geometry size is: " << (*ln)[0].get_geometry_size() << endl;        // number of pixels
 
     int n1 = 0;
+    // assigns geometry to the structure's geometry in 'space'
     for (int i = 0; i <= int((*ln).size()) - 1; i++) {
-        int n2 = 3 * ((*ln)[i].get_geometry_size());
+        int n2 = 3 * ((*ln)[i].get_geometry_size());        // 3*N
         for (int j = 0; j <= n2 - 1; j++) {
             geometry(n1 + j) = (*((*ln)[i].get_geometry()))(j);
         }
@@ -1120,11 +1126,16 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
             FParaGeometry_.push_back((*ln)[i].get_geometry());
         }
         else {
+            cout << "-------------------BPARAGEOMETRY ENTERED!!!!------------------------" << endl;
             BParaGeometry_.push_back((*ln)[i].get_geometry());
         }
     }
 
-    VectorXi FParaGeometry = ConnectGeometry(FParaGeometry_);
+    cout << "FParaGeometry_ size: " << FParaGeometry_.size() << endl;       // size is 1 because ln.size is 1
+
+    VectorXi FParaGeometry = ConnectGeometry(FParaGeometry_);       // this is just geometry of our structure. 3N
+
+    cout << "FParaGeometry size: " << FParaGeometry.size() << endl;
     set<vector<int>> FParaGeometrySet = Get3divSet(&FParaGeometry);
     //MatrixXi FParascope = find_scope_3_dim(&FParaGeometry);
     int NFpara;
@@ -1141,7 +1152,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
         throw 1;
     }
 
-    NFpara = int(round((int(FParaGeometry.size()) / 3 / bind(2) / dividesym)));
+    NFpara = int(round((int(FParaGeometry.size()) / 3 / bind(2) / dividesym)));     // number of pixels in xy plane divided by symmetry 
     cout << "NFpara" << NFpara << endl;
 
     VectorXd Para1 = VectorXd::Zero(NFpara);
@@ -1151,7 +1162,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
     for (int i = 0; i < FParaGeometry_.size(); i++) {
         int NFparatmp = int(round((int((*FParaGeometry_[i]).size()) / 3 / bind(2) / dividesym)));
         cout << "NFparatmp" << NFparatmp << endl;
-        ParaDividePos.push_back(NFParacount);
+        ParaDividePos.push_back(NFParacount);               // vector of ints. defined in header file
         NFParacount += NFparatmp;
         //Paratmplist.push_back(initial_diel_func(initial_diel_list[initialcount], NFparatmp));
         //initialcount += 1;
@@ -1161,21 +1172,27 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
     for (int i = 0; i <= NFpara - 1; i++) {
         FreeparatoPara(i) = i;
     }
+    cout << "FreeparaToParaDONE" << endl;
     int Npara = NFpara;
+
+    // BPara is always empty as far as I can tell, so never enters this
     for (int i = 0; i < BParaGeometry_.size(); i++) {
         ParaDividePos.push_back(Npara);       //The first pos for BPara is NFpara. So this line is in front of the update.
         Npara += Get3divSize(BParaGeometry_[i]);
     }
+    cout << "Get3divSize" << endl;
+
+
     Para = VectorXd::Zero(Npara);
     for (int i = 0; i <= NFpara - 1; i++) {
-        Para(i) = Para1(i);
+        // cout << "Para1 at position " << i << "is: " << Para1[i] << endl;
+        Para(i) = Para1(i);                     // but Para1 is empty...
     }
 
-    
-
-    list<set<vector<int>>> BParaGeometrySetList = Get3divSetList(BParaGeometry_);
+    list<set<vector<int>>> BParaGeometrySetList = Get3divSetList(BParaGeometry_);   // empty because BparaGeometry_ is empty
     VectorXi BParaCurrentPos = VectorXi::Zero(BParaGeometry_.size());
-    for (int i = 0; i <= int(BParaGeometry_.size()) - 1; i++) {
+    for (int i = 0; i <= int(BParaGeometry_.size()) - 1; i++) {                     // never enters this either
+        cout << "-------------BARAGEOMTRY ENTERED!!!----------" << endl;
         BParaCurrentPos(i) = ParaDividePos[i + int((FParaGeometry_).size())];
     }
 
@@ -1210,14 +1227,20 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
         }
     }
 
+    cout << "GEOMETRYPARA SIZE: " << geometryPara.size() << endl;
+    cout << "NPara SIZE: " << Npara << endl;
     Paratogeometry = vector<vector<int>>(Npara);
+
     for (int i = 0; i <= N - 1; i++) {
+        //cout << "geometryPara(i): " << geometryPara(i) << endl;
+
         if (i == 6561) {
             cout << "for i:"<<geometryPara(i) << endl;
         }
         (Paratogeometry[geometryPara(i)]).push_back(i);
         
     }
+
 
     map<vector<int>, double> Inputmap;
     if ((*InputGeo).size() != (*Inputdiel).size()) {
@@ -1236,6 +1259,11 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
             Para(i) = Inputmap[node];
         }
     }
+    cout << "para values:" << endl;
+
+     for (int i = 0; i < Para.size(); i++) {
+        cout << Para(i) << " ";
+     } 
 
 
     if (Filter == true) {

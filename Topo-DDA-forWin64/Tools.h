@@ -36,10 +36,14 @@ vector<double> ReadLam(string input);
 
 double exp_update(const double x, const double x_max, const double y_min, const double y_max);
 double piecewise_update(const double x, const double x_max, const double y_min, const double y_max);
+double piecewise_update_absolute(const double x, const double x_max, const double y_min, const double y_max);
 double linear_update(const double x, const double x_max, const double y_min, const double y_max);
 
 //int makedirect(string name);
 vector<string> splitInputStr(string input, string delimiter);
 pair<VectorXi, VectorXd> getInputStr(string pathCommonData, string pathPara);
 tuple<int, int, int> getInputNs(string pathCommonData);
+
+// penalty calculator
+double calculatePenalty(VectorXd &parameters);
 #endif

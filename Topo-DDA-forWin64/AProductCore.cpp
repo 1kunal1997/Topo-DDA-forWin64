@@ -694,6 +694,7 @@ Matrix3cd AProductCore::FCD_inter(double x, double y, double z) {
     }
 }
 
+// THIS IS CALLED!!!!
 VectorXcd AProductCore::Aproduct(VectorXcd &b){
     //! in geometry use np.meshgrid with 'ij'  
     VectorXi* R = (*CStr).get_R();

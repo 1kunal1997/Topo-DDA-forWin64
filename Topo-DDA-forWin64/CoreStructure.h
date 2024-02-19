@@ -28,6 +28,7 @@ private:
 public:
     CoreStructure(SpacePara* spacepara_, double d_);
     void UpdateStr(VectorXd step, int current_it, int Max_it);
+    void UpdateStrCGD(VectorXd step, int current_it, int Max_it);
     void UpdateStr(SpacePara* spacepara_);
     void UpdateStrSingle(int idx, double value);
     void output_to_file();
@@ -48,6 +49,7 @@ public:
     //list<int>* get_para_dep_starts();
     VectorXd* get_diel_old();
     VectorXd* get_diel_old_max();
+    double calculate_Penalty();
 
 };
 

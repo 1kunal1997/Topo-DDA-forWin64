@@ -4,11 +4,16 @@
 #include "Structure.h"
 #include "Tools.h"
 
+// this one is called when making initial structure in main
 Structure::Structure(VectorXi *total_space, VectorXi *geometry_, bool para_cond_){
+    if (!para_cond_)
+        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
     para_cond = para_cond_;
     cut(total_space, geometry_);
 }
 Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para_cond_) {
+    if (!para_cond_)
+        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
     para_cond = para_cond_;
     int N = round((*total_space).size() / 3);
     list<int> positions;
@@ -32,6 +37,8 @@ Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para
     cut(total_space, &geometry_tmp);
 }
 Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center, bool para_cond_) {
+    if (!para_cond_)
+        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
     para_cond = para_cond_;
     int N = round((*total_space).size() / 3);
     list<int> positions;
@@ -56,6 +63,8 @@ Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center,
 }
 
 Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool para_cond_){
+    if (!para_cond_)
+        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
     para_cond = para_cond_;
     int N=round((*total_space).size()/3);
     list<int> positions; 
@@ -80,7 +89,8 @@ Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool pa
 
 }
 Structure::Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str, bool para_cond_) {
-    
+    if (!para_cond_)
+        cout << "--------------PARA COND IS FALSE!!------------------" << endl;
     para_cond = para_cond_;
     int N = round((*total_space).size() / 3);
     vector<int> positions;
@@ -126,7 +136,7 @@ void Structure::cut(VectorXi* big, VectorXi* smalll) {
     //cout<<"big_scope "<<big_scope<<endl;
     list<int> positions_in;
     int number_out = 0;
-    //cout<<"small_scope "<<find_scope_3_dim(small)<<endl;
+    //cout<<"small_scope "<<find_scope_3_dim(smalll)<<endl;
     for (int i = 0; i <= number_origin - 1; i++) {
         if (((*smalll)(3 * i) < big_scope(0, 0)) || ((*smalll)(3 * i) > big_scope(0, 1)) ||
             ((*smalll)(3 * i + 1) < big_scope(1, 0)) || ((*smalll)(3 * i + 1) > big_scope(1, 1)) ||
@@ -137,6 +147,7 @@ void Structure::cut(VectorXi* big, VectorXi* smalll) {
             positions_in.push_back(i);
         }
     }
+   // cout << " number out are: " << number_out << "number of pixels are " << number_origin << endl;
     int number_in = positions_in.size();
     geometry = VectorXi::Zero(3 * number_in);
     for (int i = 0; i <= number_in - 1; i++) {

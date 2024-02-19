@@ -13,6 +13,8 @@ private:
     bool para_cond;
 public:
     //--------------------------------------Dont support dependent para build-------------------------------------------------------
+
+    // this one is called when making initial structure in main
     Structure(VectorXi* total_space, VectorXi* geometry_, bool para_cond_ = false);            //vanilla initialization
 
     //Sphere
