@@ -1,5 +1,90 @@
-﻿  正在生成代码
-  Previous IPDB not found, fall back to full compilation.
-  All 4296 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
-  已完成代码的生成
+﻿  EvoDDAModel.cpp
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(34,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(67,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(78,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(188,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(208,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(334,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(335,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(580,15): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(581,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(691,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(692,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(885,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(906,87): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1039,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1040,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1295,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1319,87): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1456,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1457,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1872,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1873,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(2127,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(2139,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  Generating code
+  557 of 4588 functions (12.1%) were compiled, the rest were copied from previous compilation.
+    53 functions were new in current compilation
+    303 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
   Topo-DDA-forWin64.vcxproj -> E:\Topo-DDA-forWin64\x64\Release\Topo-DDA-forWin64.exe

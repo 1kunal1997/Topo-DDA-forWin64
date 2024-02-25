@@ -12,13 +12,19 @@ private:
     double output_time;
     CoreStructure* CStr;
     vector<DDAModel*> allModel;                    //List of DDA models sharing the same AProductCore : "Core"
-    int ModelNum;                                 //number of DDA model
+    DDAModel* Model;
+    int ModelNum = 1;                                 //number of DDA model
     string save_position;
 
     vector<VectorXcd> PforOrigin;
     vector<VectorXcd> PforAdjoint;
     vector<VectorXcd> PforOriginMax;
     vector<VectorXcd> PforAdjointMax;
+
+    VectorXcd PolarizationforOrigin;
+    VectorXcd PolarizationforAdjoint;
+    VectorXcd PolarizationforOriginMax;
+    VectorXcd PolarizationforAdjointMax;
 
     vector<double> objPara;
     /*list<double> MajorObjectParameters;
@@ -30,7 +36,9 @@ private:
     list<string> MinorObjectFunctionNames;
     list<double> MinorObjectFunctionResults;*/
     vector<ObjDDAModel*> allObj;
-    VectorXd Originarray;                               //Record the Obj function for partial derivative (the value before change)   
+    ObjDDAModel* objfunc;
+    VectorXd Originarray;                       //Record the Obj function for partial derivative (the value before change)   
+    double originalObjValue;
     //bool HavePenalty;
     //double PenaltyFactor;
 
@@ -38,6 +46,7 @@ private:
     double PreviousObj;                            //The previous obj
     int CutoffHold;
     VectorXd MaxObjarray;                         //the individual objs for each model when the average obj is maximum(not necessaily the maximum individual objs)
+    double maximumObjValue;
     double epsilon_fix;
     double epsilon_tmp;                         //The epsilon used for calculation (can be different from the fixed input epsilon)
     bool HavePathRecord;
@@ -47,6 +56,8 @@ private:
 
     VectorXd gradientsquare;                    //cumulative summation of gradients square. Used in Adagrad.
 public:
+
+    EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, CoreStructure* CStr_, DDAModel* Model_);
     EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, CoreStructure* CStr_, vector<DDAModel*> allModel_);
 
     //functions used to calculate partial derivatives                                 
@@ -55,6 +66,7 @@ public:
     VectorXcd devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin);                       //partial derivative of obj to P. Size of P
 
     void EvoOptimization(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
+    void EvoOptimizationQuick(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
     void EvoOptimizationCGD(int Nprojection, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
     void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, VectorXd* V_, VectorXd* S_);
     double CalTheObjForSingleStr(int MAX_ITERATION, double MAX_ERROR, int Name);                    //If you want to calculate the Obj for single DDA structure.

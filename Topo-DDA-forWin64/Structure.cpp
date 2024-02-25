@@ -4,17 +4,16 @@
 #include "Structure.h"
 #include "Tools.h"
 
+
 // this one is called when making initial structure in main
-Structure::Structure(VectorXi *total_space, VectorXi *geometry_, bool para_cond_){
-    if (!para_cond_)
-        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
-    para_cond = para_cond_;
+Structure::Structure(VectorXi* geometry_) {
+    geometry = *geometry_;
+}
+
+Structure::Structure(VectorXi *total_space, VectorXi *geometry_){
     cut(total_space, geometry_);
 }
-Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para_cond_) {
-    if (!para_cond_)
-        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
-    para_cond = para_cond_;
+Structure::Structure(VectorXi* total_space, double r, Vector3d center) {
     int N = round((*total_space).size() / 3);
     list<int> positions;
     for (int i = 0; i <= N - 1; i++) {
@@ -36,10 +35,7 @@ Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para
     }
     cut(total_space, &geometry_tmp);
 }
-Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center, bool para_cond_) {
-    if (!para_cond_)
-        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
-    para_cond = para_cond_;
+Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center) {
     int N = round((*total_space).size() / 3);
     list<int> positions;
     for (int i = 0; i <= N - 1; i++) {
@@ -62,10 +58,7 @@ Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center,
     cut(total_space, &geometry_tmp);
 }
 
-Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool para_cond_){
-    if (!para_cond_)
-        cout << "------------------PARA COND IS FALSE!!!------------------" << endl;
-    para_cond = para_cond_;
+Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center){
     int N=round((*total_space).size()/3);
     list<int> positions; 
     for(int i=0;i<=N-1;i++){
@@ -88,10 +81,7 @@ Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool pa
     cut(total_space, &geometry_tmp);
 
 }
-Structure::Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str, bool para_cond_) {
-    if (!para_cond_)
-        cout << "--------------PARA COND IS FALSE!!------------------" << endl;
-    para_cond = para_cond_;
+Structure::Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str) {
     int N = round((*total_space).size() / 3);
     vector<int> positions;
     set<vector<int>> Strpoints;
@@ -171,7 +161,4 @@ void Structure::cut(VectorXi* big, VectorXi* smalll) {
 }
 int Structure::get_geometry_size() {
     return round(geometry.size() / 3);
-}
-bool Structure::para_or_not() {
-    return para_cond;
 }

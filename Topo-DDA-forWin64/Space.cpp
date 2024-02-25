@@ -12,9 +12,21 @@ int Space::get_ln_size(){
 vector<Structure>* Space::get_ln(){
     return ln;
 }
+Structure* Space::get_structure() {
+    return structure;
+}
 tuple<int, int, int, int> Space::get_Ns(){
     return make_tuple(Nx, Ny, Nz, N);
 }
+
+Space::Space(int Nx_, int Ny_, int Nz_, int N_, Structure* structure_) {
+    Nx = Nx_;
+    Ny = Ny_;
+    Nz = Nz_;
+    N = N_;
+    structure = structure_;
+} 
+
 Space::Space(VectorXi *total_space_, int Nx_, int Ny_, int Nz_, int N_, vector<Structure> *ln_){
     total_space=total_space_;
     Nx=Nx_;

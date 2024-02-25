@@ -196,9 +196,28 @@ if config1['Model Name']['name']=="EvoOpt 2D input periodic" and config["Plot"][
     for step in stepArray:
         for weight in weightArray:
             for penaltytype in penaltytypeArray:
-                print("--------------Step is: " + str(step) + ", weight is, " + str(weight) + "-----------------")
+
                 #pos = ".\\cylinder_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytype + "_absolute_0.0to0.5\\"
-                pos = ".\\Binarizedit300_lam540_sym_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\"
+                pos = "..\\Calculations\\SmallerGridCheck12x12x4\\"
+
+                plt.figure(1)
+                objectfunc = np.loadtxt(pos + "\\convergence.txt")
+                #objectfuncwpenalty = np.loadtxt('cylinder_it200_sym_epsilon_0.100000_weight_0.300000/convergenceWithPenalty.txt')
+                plt.plot(objectfunc, label = 'E')
+                #plt.plot(objectfuncwpenalty, label = 'E - p')
+                plt.legend(loc='lower right')
+                plt.title('Object Function Plot')
+                plt.ylabel('Object Function')
+                plt.xlabel('Iteration #')
+                #plt.xlim([0,200])
+                #plt.yscale('symlog')
+                #plt.ylim([1, 10**(6)])
+                plt.rc('axes', titlesize=14)     # fontsize of the axes title
+                plt.rc('axes', labelsize=12)    # fontsize of the x and y labels
+                plt.savefig(pos + "\\Object Function.png")
+                #plt.show()
+                #plt.close(1)
+                print("--------------Step is: " + str(step) + ", weight is, " + str(weight) + "-----------------")
 
                 for filename in sorted(os.listdir(pos+"CoreStructure"), key = lambda x: int(x[cutnumber:x.index(".txt")])):
                     if filename.endswith(".txt"):

@@ -85,6 +85,39 @@ pair<VectorXi, VectorXd> getInputStr(string pathCommonData, string pathPara) {
     return pair<VectorXi, VectorXd>(geometrytmp, dielinput);
 }
 
+tuple<int, int, int, int, VectorXi, VectorXd> getInputs(string pathCommonData, string pathPara) {
+    string name1 = pathCommonData;
+    string name2 = pathPara;
+
+
+    ifstream fin1(name1), fin2(name2);
+    int Nx, Ny, Nz;
+    int N;
+    fin1 >> Nx;
+    fin1 >> Ny;
+    fin1 >> Nz;
+    fin1 >> N;
+    cout << "Nx is" << Nx << endl;
+    cout << "Ny is" << Ny << endl;
+    cout << "Nz is" << Nz << endl;
+    cout << "Input geometry size: " << N << endl;
+    VectorXi geometrytmp = VectorXi::Zero(3 * N);
+    for (int i = 0; i <= N - 1; i++) {
+        fin1 >> geometrytmp(3 * i);
+        fin1 >> geometrytmp(3 * i + 1);
+        fin1 >> geometrytmp(3 * i + 2);
+    }
+    VectorXd dielinput = VectorXd::Zero(3 * N);
+    for (int i = 0; i <= N - 1; i++) {
+        fin2 >> dielinput(3 * i);
+        fin2 >> dielinput(3 * i + 1);
+        fin2 >> dielinput(3 * i + 2);
+    }
+    fin1.close();
+    fin2.close();
+    return tuple<int, int, int, int, VectorXi, VectorXd>(Nx, Ny, Nz, N, geometrytmp, dielinput);
+}
+
 tuple<int, int, int> getInputNs(string pathCommonData) {
     string name1 = pathCommonData;
 
@@ -799,13 +832,13 @@ double piecewise_update(const double x, const double x_max, const double y_min, 
 }
 
 double piecewise_update_absolute(const double x, const double x_max, const double y_min, const double y_max) {
-    if (x <= 100) {
+    if (x <= 125) {
         return y_min;
     }
-    else if (100 < x && x <= 140) {
+    else if (125 < x && x <= 175) {
         return y_min + (y_max - y_min) / 5;
     }
-    else if (140 < x && x <= 160) {
+    else if (175 < x && x <= 200) {
         return y_min + (y_max - y_min) / 2.5;
     }
     else {

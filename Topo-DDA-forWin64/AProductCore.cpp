@@ -248,6 +248,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material
     
 }
 
+// HEEYO!
 AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_) {
     MAXm = MAXm_;
     MAXn = MAXn_;

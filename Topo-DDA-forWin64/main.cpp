@@ -318,7 +318,7 @@ void task() {
         center(2) = Nz / 2;
         /*l << Nx - 1, Ny - 1, Nz - 1;
         Structure s1(S.get_total_space(), l, center);*/
-        Structure s1(S.get_total_space(), &inputGeo, true);
+        Structure s1(S.get_total_space(), &inputGeo);
 
         S = S + s1;
 
@@ -398,7 +398,7 @@ void task() {
         std::vector<double> epsilonArray = {0.1};
         std::vector<double> weightArray = {0.2};
         std::vector<int> projectionArray = { 5, 10, 20, 50 };
-        std::vector<string> penaltytypeArray = {"piecewise"};
+        std::vector<string> penaltytypeArray = {"linear"};
         double d;
 
         for (int i = 0; i < epsilonArray.size(); i++) {
@@ -410,8 +410,8 @@ void task() {
                 for (int k = 0; k < penaltytypeArray.size(); k++) {
                     //create directories
 
-                    std::string directoryName = ".\\Binarizedit300_lam540_sym_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\";
-
+                    std::string directoryName = "..\\Calculations\\cylinder_it200_lam542_sym_epsilon_0.1_penaltytype_linear0.0to0.5_repeat\\";
+                    cout << "Storing data in : " << directoryName << endl;
                     //std::string directoryName = ".\\cylinder_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");
@@ -422,21 +422,22 @@ void task() {
 
                     VectorXi inputGeo;
                     VectorXd inputDiel;
+                    int Nx, Ny, Nz;
+                    int N = 0;
                     string pathCommonData = reader2.Get("Geometry", "pathCommonData", "UNKNOWN");
                     string pathPara = reader2.Get("Geometry", "pathPara", "UNKNOWN");
-                    tie(inputGeo, inputDiel) = getInputStr(pathCommonData, pathPara);
+                    cout << "path common data file is: " << pathCommonData << endl;
+                    tie(Nx, Ny, Nz, N, inputGeo, inputDiel) = getInputs(pathCommonData, pathPara);
 
                     string save_position = reader2.Get("Output", "saveDir", "UNKNOWN");       //output file
-
-                    int Nx, Ny, Nz;
-                    tie(Nx, Ny, Nz) = getInputNs(pathCommonData);
-                    int N = 0;
-                    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+                    
+                   // VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
                     /* for (int i = 0; i < total_space.size(); i++) {
                          cout << total_space(i) << endl;
                      } */
-                    vector<Structure> ln;
-                    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+                    Structure s(&inputGeo);
+                    Space S(Nx, Ny, Nz, N, &s);
 
                     Vector3d center;
                     Vector3d l;
@@ -446,9 +447,6 @@ void task() {
                     center(2) = Nz / 2;
                     /*l << Nx - 1, Ny - 1, Nz - 1;
                     Structure s1(S.get_total_space(), l, center);*/
-                    Structure s1(S.get_total_space(), &inputGeo, true);
-
-                    S = S + s1;
 
                     double lam = reader2.GetInteger("Input field", "lam", -1);
                     Vector3d n_K;
@@ -486,7 +484,7 @@ void task() {
                     symReader readSymmetry(reader2);
                     string symmetry = readSymmetry.getSymmetry();
                     vector<double> symAxis = readSymmetry.getSymAxis();
-                    SpacePara spacepara(&S, bind, &inputGeo, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln); // line 1088 in SpacePara
+                    SpacePara spacepara(bind, &S, &inputGeo, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln); // line 1088 in SpacePara
                     CoreStructure CStr(&spacepara, d);
                     double nback = sqrt(real(material(0)));
                     cout << "CoreStructure created" << endl;
@@ -499,8 +497,8 @@ void task() {
                     vector<double> objPara = objReader.GetObjPara();  //Focal spot position.
                     // vector<double> objPara = [x, y, z]
                     //vector<DDAModel> models;
-                    vector<DDAModel*> modelPtrs;
-                    modelPtrs.push_back(&TestModel);
+                    //vector<DDAModel*> modelPtrs;
+                    //modelPtrs.push_back(&TestModel);
 
 
                     // CHANGING THIS TO TRUE TO SEE WHAT HAPPENS!!! IT WAS ORIGINALLY FALSE!!
@@ -512,8 +510,8 @@ void task() {
 
 
 
-                    EvoDDAModel evoModel(objName, objPara, epsilonArray[i], HavePathRecord, HaveOriginHeritage, HaveAdjointHeritage, directoryName, &CStr, modelPtrs);
-                    evoModel.EvoOptimization(weightArray[j], penaltytypeArray[k], MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam"); // line 393 in EvoDDAModel
+                    EvoDDAModel evoModel(objName, objPara, epsilonArray[i], HavePathRecord, HaveOriginHeritage, HaveAdjointHeritage, directoryName, &CStr, &TestModel);
+                    evoModel.EvoOptimizationQuick(weightArray[j], penaltytypeArray[k], MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam"); // line 393 in EvoDDAModel
                 }
             }
         }

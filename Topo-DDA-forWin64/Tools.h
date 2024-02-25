@@ -42,6 +42,7 @@ double linear_update(const double x, const double x_max, const double y_min, con
 //int makedirect(string name);
 vector<string> splitInputStr(string input, string delimiter);
 pair<VectorXi, VectorXd> getInputStr(string pathCommonData, string pathPara);
+tuple<int, int, int, int, VectorXi, VectorXd> getInputs(string pathCommonData, string pathPara);
 tuple<int, int, int> getInputNs(string pathCommonData);
 
 // penalty calculator

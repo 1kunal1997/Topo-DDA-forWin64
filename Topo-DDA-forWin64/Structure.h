@@ -10,16 +10,18 @@ using namespace Eigen;
 class Structure {
 private:
     VectorXi geometry;
-    bool para_cond;
 public:
     //--------------------------------------Dont support dependent para build-------------------------------------------------------
 
+    // created this to bypass 'cut' function, which is unnecessary when geometry encapsulates full space
+    Structure(VectorXi* geometry_);
+
     // this one is called when making initial structure in main
-    Structure(VectorXi* total_space, VectorXi* geometry_, bool para_cond_ = false);            //vanilla initialization
+    Structure(VectorXi* total_space, VectorXi* geometry_);            //vanilla initialization
 
     //Sphere
-    Structure(VectorXi* total_space, double r, Vector3d center, bool para_cond_ = false);  //r: actual radius/d. center: actual center/d. In charge of Sphere 
-    Structure(VectorXi* total_space, double r, double h, Vector3d center, bool para_cond_ = false);
+    Structure(VectorXi* total_space, double r, Vector3d center);  //r: actual radius/d. center: actual center/d. In charge of Sphere 
+    Structure(VectorXi* total_space, double r, double h, Vector3d center);
 
     //Circle
     //Structure(VectorXi *total_space, string initial_diel, double r, Vector3i center, Vector3i direction, int para_); //build a circle, direction is its normalized direction in Cart. coord.
@@ -29,8 +31,8 @@ public:
 
     //--------------------------------------Support dependent para build-------------------------------------------------------------
     //Bulk
-    Structure(VectorXi* total_space, Vector3d l, Vector3d center, bool para_cond_ = false);    //Ractangular
-    Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str, bool para_cond_ = false);
+    Structure(VectorXi* total_space, Vector3d l, Vector3d center);    //Ractangular
+    Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str);
     //Duplicate
     //Structure(VectorXi *total_space, Structure *s, Vector3i direction, int times, int para_);                     //Initializa a Structure by duplicating a existing structure along a certain direction for several times. Direction is normalized and can only be alone x, y or z.
     //The original structure is not included. original structure + new structure = times * original structure. If set para=2 and original para=1, then depend on origin str as geometry_dep. If para=2 and original para=2, will copy origin geometry_dep.
@@ -45,6 +47,5 @@ public:
     //bool sym_or_not();
     //vector<string> get_sym_condition();
     //vector<double> get_sym_axis();
-    bool para_or_not();
 };
 #endif

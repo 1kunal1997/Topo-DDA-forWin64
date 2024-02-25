@@ -86,6 +86,7 @@ def Shape(geometry,diel,d,angle1,angle2,colormax=1,shapebarrier=0.5,plotDpi=100,
         fig.suptitle("iteration{}".format(iteration))
         plt.savefig(position+"{}Space.png".format(str(iteration).zfill(decimal)),dpi=plotDpi) 
     #plt.show()
+    plt.close()
 def EField(geometry,diel,d,k_dir,E_dir,E_tot,colormax=1,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the E field of object as arrow matrix.
     # Input:
@@ -207,10 +208,10 @@ def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,plotDpi=100, Elimit=False, El
     #print(geometry)
 
     N=round(np.shape(geometry)[0]/3)
-    print(N)
+    #print(N)
     geometry=np.reshape(geometry,(N,3))
     
-    print(geometry.shape)
+   # print(geometry.shape)
     #diel=np.reshape(diel,(N,3))
     #diel=diel[:,0]
     
@@ -222,7 +223,7 @@ def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,plotDpi=100, Elimit=False, El
     [X,Y,Z] = list(np.amax(geometry,axis=0)+1)
     Axis_max = max(X,Y,Z)*1.2*d
     
-    print("{}, {}, {}".format(X,Y,Z))
+   # print("{}, {}, {}".format(X,Y,Z))
 
     E_tot = E_tot.reshape(int(E_tot.size/3),3)
     E_tot_real=E_tot.real
@@ -271,3 +272,4 @@ def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,plotDpi=100, Elimit=False, El
         plt.clim(Elimitlow, Elimithigh)
     plt.colorbar()
     plt.savefig(position+"Model{} E_slice_{}at{}.png".format(iteration, (["X", "Y", "Z"])[slicedim], slicepos), dpi=plotDpi) 
+    plt.close()

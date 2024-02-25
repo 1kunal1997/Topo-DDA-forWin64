@@ -9,6 +9,7 @@
 
 using namespace std::chrono;
 
+// HEEYO!
 DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, bool verbose_) {
     
     Core = AProductCore_;

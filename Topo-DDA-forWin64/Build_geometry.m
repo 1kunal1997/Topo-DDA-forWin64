@@ -85,4 +85,4 @@ model.geom('geom1').feature('uni0').selection('input').set(exts0);
 model.geom.run();
 
 
-model.save('E:\Topo-DDA-forWin64\Topo-DDA-forWin64\DDA_geo_cylinder_it300_piecewise_aboslute_unbinarized.mph')
+model.save('E:\Topo-DDA-forWin64\Topo-DDA-forWin64\DDA_geo_cylinder_it300_piecewise_aboslute_binarized.mph')

@@ -869,7 +869,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_
     vector<VectorXi*> FParaGeometry_, BParaGeometry_;
 
     for (int i = 0; i <= int((*ln).size()) - 1; i++) {
-        if ((*ln)[i].para_or_not()) {
+        if (true) {
             FParaGeometry_.push_back((*ln)[i].get_geometry());
         }
         else {
@@ -1086,6 +1086,292 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_
 
 }
 
+SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_) {
+    Filter = Filter_;
+    space = space_;
+    bind = bind_;
+    VectorXi* total_space = InputGeo;
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    geometry = VectorXi::Zero(3 * N);
+    Periodic = Periodic_;
+    Lx = Lx_;
+    Ly = Ly_;
+    if (Filter && (bind(0) != 1.0) || bind(1) != 1.0) {
+        cout << "SpacePara--If Filter=True, bind(0) and bind(1) must be 1.0" << endl;
+        throw 1;
+    }
+
+    Structure* structure = (*space).get_structure();
+    //vector<Structure>* ln = (*space).get_ln();
+    //cout << "ln size is: " << (*ln).size() << endl;         // should be just 1
+    //cout << "ln geometry size is: " << (*ln)[0].get_geometry_size() << endl;        // number of pixels
+
+    int n1 = 3 * (*structure).get_geometry_size();
+    // assigns geometry to the structure's geometry in 'space'
+    for (int i = 0; i < n1; i++) {
+
+        geometry(i) = (*((*structure).get_geometry()))(i);
+
+    }
+    geometryPara = VectorXi::Zero(N);
+    scope = find_scope_3_dim(&geometry);
+
+    vector<VectorXi*> FParaGeometry_;
+
+    FParaGeometry_.push_back((*structure).get_geometry());
+
+    cout << "FParaGeometry_ size: " << FParaGeometry_.size() << endl;       // size is 1 because ln.size is 1
+
+    VectorXi FParaGeometry = ConnectGeometry(FParaGeometry_);       // this is just geometry of our structure. 3N
+
+    cout << "FParaGeometry size: " << FParaGeometry.size() << endl;
+    set<vector<int>> FParaGeometrySet = Get3divSet(&FParaGeometry);
+    //MatrixXi FParascope = find_scope_3_dim(&FParaGeometry);
+    int NFpara;
+
+    int dividesym;
+    if (symmetry == "None") {
+        dividesym = 1;
+    }
+    else if (symmetry == "4fold") {
+        dividesym = 4;
+    }
+    else {
+        cout << "SpacePara: not None nor 4 fold. Not supported" << endl;
+        throw 1;
+    }
+
+    NFpara = int(round((int(FParaGeometry.size()) / 3 / bind(2) / dividesym)));     // number of pixels in xy plane divided by symmetry 
+    cout << "NFpara" << NFpara << endl;
+
+    VectorXd Para1 = VectorXd::Zero(NFpara);
+    //vector<VectorXd> Paratmplist;
+    int initialcount = 0;
+    int NFParacount = 0;
+    for (int i = 0; i < FParaGeometry_.size(); i++) {
+        int NFparatmp = int(round((int((*FParaGeometry_[i]).size()) / 3 / bind(2) / dividesym)));
+        cout << "NFparatmp" << NFparatmp << endl;
+        ParaDividePos.push_back(NFParacount);               // vector of ints. defined in header file
+        NFParacount += NFparatmp;
+        //Paratmplist.push_back(initial_diel_func(initial_diel_list[initialcount], NFparatmp));
+        //initialcount += 1;
+    }
+
+    FreeparatoPara = VectorXi::Zero(NFpara);                              //Points to the position of free para in Para. In this function, actually it is the first NFpara elements in Para.
+    for (int i = 0; i <= NFpara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
+    cout << "FreeparaToParaDONE" << endl;
+    int Npara = NFpara;
+
+    Para = VectorXd::Zero(Npara);
+    for (int i = 0; i <= NFpara - 1; i++) {
+        // cout << "Para1 at position " << i << "is: " << Para1[i] << endl;
+        Para(i) = Para1(i);                     // but Para1 is empty...
+    }
+
+    map<vector<int>, int> FCurrent;
+    int currentpos = 0;
+    for (int i = 0; i <= N - 1; i++) {
+        int x = geometry(3 * i);
+        int y = geometry(3 * i + 1);
+        int z = geometry(3 * i + 2);
+        vector<int> tmp{ x,y,z };
+        if (FParaGeometrySet.count(tmp)) {
+
+            vector<int> currentxy{ x,y };
+            if (!FCurrent.count(currentxy)) {
+
+                FCurrentinsert(&FCurrent, currentxy, &currentpos, symmetry, &symaxis);
+            }
+            geometryPara(i) = FCurrent[currentxy];                                     //The first NFpara elements in Para is the elements in FreeParatoPara 
+        }
+    }
+
+    cout << "GEOMETRYPARA SIZE: " << geometryPara.size() << endl;
+    cout << "NPara SIZE: " << Npara << endl;
+    Paratogeometry = vector<vector<int>>(Npara);
+
+    for (int i = 0; i <= N - 1; i++) {
+        cout << "geometryPara(i) at " << i << " is: " << geometryPara(i) << endl;
+
+        if (i == 6561) {
+            cout << "for i:" << geometryPara(i) << endl;
+        }
+        (Paratogeometry[geometryPara(i)]).push_back(i);
+
+    }
+
+    map<vector<int>, double> Inputmap;
+    if ((*InputGeo).size() != (*Inputdiel).size()) {
+        cout << "ERROR: SpacePara::SpacePara: Filter==(*InputGeo).size() != (*Inputdiel).size()" << endl;
+        throw 1;
+    }
+    int Inputsize = int(round(int((*InputGeo).size()) / 3));
+    for (int i = 0; i < Inputsize; i++) {
+        Inputmap.insert(pair<vector<int>, double>(vector<int>{(*InputGeo)(3 * i), (*InputGeo)(3 * i + 1), (*InputGeo)(3 * i + 2)}, (*Inputdiel)(3 * i)));
+    }
+    for (int i = 0; i < Npara; i++) {
+        /*cout << i << endl;*/
+        int pos = Paratogeometry[i][0];
+        vector<int> node{ geometry(3 * pos), geometry(3 * pos + 1), geometry(3 * pos + 2) };
+        if (Inputmap.count(node)) {
+            Para(i) = Inputmap[node];
+        }
+    }
+    cout << "para values:" << endl;
+
+    for (int i = 0; i < Para.size(); i++) {
+        cout << Para(i) << " ";
+    }
+
+
+    if (Filter == true) {
+        Para_origin = Para;
+        Para_filtered = Para;
+        Filterstats = Filterstats_;
+        if (Filterstats == NULL) {
+            cout << "ERROR: SpacePara::SpacePara: Filter==true then Filterstats must be passed in." << endl;
+            throw 1;
+        }
+        //Only works when freepara is 2D binding (Only do the filter in 2D)
+        FreeWeight = vector<vector<WeightPara>>(NFpara);
+
+        double rfilter = (*Filterstats).get_rfilter();
+        for (int i = 0; i <= NFpara - 1; i++) {
+            int poso = Paratogeometry[FreeparatoPara(i)][0];                 //As 2D extrusion is assumed, different z does not matter
+            int xo = geometry(3 * poso);
+            int yo = geometry(3 * poso + 1);
+            int zo = geometry(3 * poso + 2);
+
+
+
+            for (int j = 0; j <= Npara - 1; j++) {
+                //bool inornot = false;
+                //cout << j << endl;
+                for (int k = 0; k < Paratogeometry[j].size(); k++) {
+                    int posr = Paratogeometry[j][k];
+
+                    int xr = geometry(3 * posr);
+                    int yr = geometry(3 * posr + 1);
+                    int zr = geometry(3 * posr + 2);
+                    if (Periodic == false) {
+                        if ((zo == zr) && (circlerange(xo, yo, xr, yr, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr, yr, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                    }
+                    else {
+                        //Own cell
+                        if ((zo == zr) && (circlerange(xo, yo, xr, yr, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr, yr, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //0, -1
+                        if ((zo == zr) && (circlerange(xo, yo, xr, yr - Ly, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr, yr - Ly, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //-1, -1
+                        if ((zo == zr) && (circlerange(xo, yo, xr - Lx, yr - Ly, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr - Lx, yr - Ly, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //-1, 0
+                        if ((zo == zr) && (circlerange(xo, yo, xr - Lx, yr, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr - Lx, yr, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //-1, 1
+                        if ((zo == zr) && (circlerange(xo, yo, xr - Lx, yr + Ly, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr - Lx, yr + Ly, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //0, 1
+                        if ((zo == zr) && (circlerange(xo, yo, xr, yr + Ly, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr, yr + Ly, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //1, 1
+                        if ((zo == zr) && (circlerange(xo, yo, xr + Lx, yr + Ly, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr + Lx, yr + Ly, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //1, 0
+                        if ((zo == zr) && (circlerange(xo, yo, xr + Lx, yr, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr + Lx, yr, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                        //1, -1
+                        if ((zo == zr) && (circlerange(xo, yo, xr + Lx, yr - Ly, rfilter))) {
+                            //1. Same xy plane 2. inside the circle in xy plane 
+                            //para>=2 wont be in NFpara
+                            int posweight = j;
+                            double weight = calweight(xo, yo, xr + Lx, yr - Ly, rfilter);
+                            FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                            //break;
+                            //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                        }
+                    }
+
+
+                }
+
+            }
+        }
+    }
+
+
+
+
+}
+
 // HEEYO!
 SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_) {
     Filter = Filter_;
@@ -1122,7 +1408,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
     vector<VectorXi*> FParaGeometry_, BParaGeometry_;
 
     for (int i = 0; i < (*ln).size(); i++) {
-        if ((*ln)[i].para_or_not()) {
+        if (true) {
             FParaGeometry_.push_back((*ln)[i].get_geometry());
         }
         else {
@@ -1232,7 +1518,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
     Paratogeometry = vector<vector<int>>(Npara);
 
     for (int i = 0; i <= N - 1; i++) {
-        //cout << "geometryPara(i): " << geometryPara(i) << endl;
+        cout << "geometryPara(i) at " << i << " is: " << geometryPara(i) << endl;
 
         if (i == 6561) {
             cout << "for i:"<<geometryPara(i) << endl;
