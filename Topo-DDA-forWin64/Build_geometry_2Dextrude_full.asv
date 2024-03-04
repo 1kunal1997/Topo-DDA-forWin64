@@ -1,13 +1,34 @@
 name = "DDA_template.mph";
 model = mphload(name);
-data = importdata('para_150nm_cylin_atbound_lam542_it200_beta100_eps0.1_sym_AutomationTest\CoreStructure299Rounded.txt');
+data = importdata('E:\Topo-DDA-forWin64\Calculations\Random Initial Structure\randomdist_it300_lam542_sym_filterTrue_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute0.0to0.5\CoreStructure\CoreStructure299Rounded.txt');
 
 %remove this if you want hybrid material!!!
-bitmask = data;
+%bitmask = data;
+bitmask = round(data);
+
 Nx = 22;
 Ny = 22;
 Nz = 10;
 dist = 15;
+
+BMin = BinParm.Min;
+BMax = BinParm.Max;
+BStart = BinParm.IterationStart;
+BHold = BinParm.IterationHold;
+
+BMid = BMax/20;
+
+BVector = zeros(1,MaxIterations);
+
+Bmult1 = (BMid/BMin)^(1/floor((round(MaxIterations/2)-BStart)/BHold));
+Bmult2 = (BMax/BMid)^(1/floor((round(MaxIterations/2))/BHold));
+
+% The binarization speed is a piecewise function
+BVector((BStart+1):round(MaxIterations/2)) = BMin*Bmult1.^(floor((1:(round(MaxIterations/2)-BStart))/BHold));
+BVector((round(MaxIterations/2)+1):end) = BMid*Bmult2.^(floor((1:(MaxIterations-round(MaxIterations/2)))/BHold));
+
+
+
 d=strcat(num2str(dist),'[nm]');
 h = Nz*dist;
 height = strcat(num2str(h),'[nm]');
@@ -234,6 +255,13 @@ model.component('comp1').selection('box7').set('condition', 'inside');
 model.component('comp1').selection('box7').set('zmin', '5*height - height/2');
 model.component('comp1').selection('box7').set('zmax', '5*height - height/2 + 1[nm]');
 
+model.component('comp1').selection.create('box8', 'Box');
+model.component('comp1').selection('box8').set('entitydim', 2);
+model.component('comp1').selection('box8').set('condition', 'inside');
+model.component('comp1').selection('box8').set('zmin', 0);
+model.component('comp1').selection('box8').set('zmax', '1[nm]');
+model.component('comp1').selection('box8').label('Workplane');
+
 % ------------------------- Variables --------------------------------
 model.component('comp1').cpl.create('aveop1', 'Average');
 model.component('comp1').cpl('aveop1').set('axisym', true);
@@ -264,10 +292,105 @@ model.component('comp1').physics('ewfd').feature('port1').set('SlitType', 'Domai
 model.component('comp1').physics('ewfd').feature('port1').set('E0', [1 0 0]);
 model.component('comp1').physics('ewfd').feature('port1').set('beta', 'ewfd.k0');
 
-% --
+% --------------------- Mesh ------------------------------------
+model.component('comp1').mesh('mesh1').create('ftri1', 'FreeTri');
+model.component('comp1').mesh('mesh1').feature('ftri1').selection.named('box8');
+model.component('comp1').mesh('mesh1').feature('ftri1').create('size1', 'Size');
+model.component('comp1').mesh('mesh1').feature('ftri1').feature('size1').set('custom', true);
+model.component('comp1').mesh('mesh1').feature('ftri1').feature('size1').set('hmaxactive', true);
+model.component('comp1').mesh('mesh1').feature('ftri1').feature('size1').set('hmax', 'd/3');
+model.component('comp1').mesh('mesh1').create('swe1', 'Sweep');
+model.component('comp1').mesh('mesh1').feature('swe1').selection.geom('geom1', 3);
+model.component('comp1').mesh('mesh1').feature('swe1').selection.named('uni3');
+model.component('comp1').mesh('mesh1').feature('swe1').selection.named('geom1_cselall_dom');
+model.component('comp1').mesh('mesh1').feature('swe1').create('size1', 'Size');
+model.component('comp1').mesh('mesh1').feature('swe1').feature('size1').set('custom', true);
+model.component('comp1').mesh('mesh1').feature('swe1').feature('size1').set('hmaxactive', true);
+model.component('comp1').mesh('mesh1').feature('swe1').feature('size1').set('hmax', '2*d');
+model.component('comp1').mesh('mesh1').create('ftet1', 'FreeTet');
+model.component('comp1').mesh('mesh1').feature('ftet1').selection.geom('geom1', 3);
+model.component('comp1').mesh('mesh1').feature('ftet1').selection.named('uni3');
+model.component('comp1').mesh('mesh1').feature('ftet1').create('size1', 'Size');
+model.component('comp1').mesh('mesh1').feature('ftet1').feature('size1').set('custom', true);
+model.component('comp1').mesh('mesh1').feature('ftet1').feature('size1').set('hmaxactive', true);
+model.component('comp1').mesh('mesh1').feature('ftet1').feature('size1').set('hmax', 'el_max');
+model.component('comp1').mesh('mesh1').feature('ftet1').feature('size1').set('hminactive', true);
+model.component('comp1').mesh('mesh1').feature('ftet1').feature('size1').set('hmin', 'd/3');
+model.component('comp1').mesh('mesh1').create('swe2', 'Sweep');
+model.component('comp1').mesh('mesh1').feature('swe2').create('dis1', 'Distribution');
+model.component('comp1').mesh('mesh1').run('swe2');
+
+% ----------------------------- Create Study --------------------------------
+model.study.create('std1');
+model.study('std1').create('stat', 'Stationary');
+model.study('std1').feature('stat').set('useparam', true);
+model.study('std1').feature('stat').setIndex('pname', 'A', 0);
+model.study('std1').feature('stat').setIndex('plistarr', '', 0);
+model.study('std1').feature('stat').setIndex('punit', 'V/m', 0);
+model.study('std1').feature('stat').setIndex('pname', 'A', 0);
+model.study('std1').feature('stat').setIndex('plistarr', '', 0);
+model.study('std1').feature('stat').setIndex('punit', 'V/m', 0);
+model.study('std1').feature('stat').setIndex('pname', 'lam', 0);
+model.study('std1').feature('stat').setIndex('plistarr', 'range(lam_min,1[nm],560[nm])', 0);
+model.study('std1').feature('stat').setIndex('punit', 'nm', 0);
+
+model.sol.create('sol1');
+model.sol('sol1').study('std1');
+
+model.study('std1').feature('stat').set('notlistsolnum', 1);
+model.study('std1').feature('stat').set('notsolnum', 'auto');
+model.study('std1').feature('stat').set('listsolnum', 1);
+model.study('std1').feature('stat').set('solnum', 'auto');
+
+model.sol('sol1').create('st1', 'StudyStep');
+model.sol('sol1').feature('st1').set('study', 'std1');
+model.sol('sol1').feature('st1').set('studystep', 'stat');
+model.sol('sol1').create('v1', 'Variables');
+model.sol('sol1').feature('v1').set('control', 'stat');
+model.sol('sol1').create('s1', 'Stationary');
+model.sol('sol1').feature('s1').set('stol', 0.001);
+model.sol('sol1').feature('s1').create('p1', 'Parametric');
+model.sol('sol1').feature('s1').feature.remove('pDef');
+model.sol('sol1').feature('s1').feature('p1').set('control', 'stat');
+model.sol('sol1').feature('s1').set('control', 'stat');
+model.sol('sol1').feature('s1').feature('aDef').set('complexfun', true);
+model.sol('sol1').feature('s1').create('fc1', 'FullyCoupled');
+model.sol('sol1').feature('s1').create('i1', 'Iterative');
+model.sol('sol1').feature('s1').feature('i1').set('linsolver', 'bicgstab');
+model.sol('sol1').feature('s1').feature('i1').set('prefuntype', 'left');
+model.sol('sol1').feature('s1').feature('i1').label('Suggested Iterative Solver (ewfd)');
+model.sol('sol1').feature('s1').feature('i1').create('mg1', 'Multigrid');
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('pr').create('sv1', 'SORVector');
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('pr').feature('sv1').set('prefun', 'sorvec');
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('pr').feature('sv1').set('iter', 2);
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('pr').feature('sv1').set('relax', 1);
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('pr').feature('sv1').set('sorvecdof', {'comp1_E'});
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('po').create('sv1', 'SORVector');
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('po').feature('sv1').set('prefun', 'soruvec');
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('po').feature('sv1').set('iter', 2);
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('po').feature('sv1').set('relax', 1);
+model.sol('sol1').feature('s1').feature('i1').feature('mg1').feature('po').feature('sv1').set('sorvecdof', {'comp1_E'});
+model.sol('sol1').feature('s1').create('i2', 'Iterative');
+model.sol('sol1').feature('s1').feature('i2').set('linsolver', 'fgmres');
+model.sol('sol1').feature('s1').feature('i2').label('Suggested Iterative Solver (ewfd) 2');
+model.sol('sol1').feature('s1').feature('i2').create('mg1', 'Multigrid');
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('pr').create('sv1', 'SORVector');
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('pr').feature('sv1').set('prefun', 'sorvec');
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('pr').feature('sv1').set('iter', 2);
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('pr').feature('sv1').set('relax', 1);
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('pr').feature('sv1').set('sorvecdof', {'comp1_E'});
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('po').create('sv1', 'SORVector');
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('po').feature('sv1').set('prefun', 'soruvec');
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('po').feature('sv1').set('iter', 2);
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('po').feature('sv1').set('relax', 1);
+model.sol('sol1').feature('s1').feature('i2').feature('mg1').feature('po').feature('sv1').set('sorvecdof', {'comp1_E'});
+model.sol('sol1').feature('s1').feature('fc1').set('linsolver', 'i1');
+model.sol('sol1').feature('s1').feature.remove('fcDef');
+model.sol('sol1').attach('std1');
+model.sol('sol1').feature('s1').feature('dDef').active(true);
 
 
 model.geom.run();
 disp("im done");
 
-model.save('E:\Topo-DDA-forWin64\Topo-DDA-forWin64\DDA_geo_cylinder_it300_piecewise_aboslute_binarized_extrude.mph')
+model.save('E:\Topo-DDA-forWin64\Calculations\Random Initial Structure\randomdist_it300_lam542_sym_filterTrue_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute0.0to0.5\binarizedit299.mph')

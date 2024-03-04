@@ -216,6 +216,9 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         objWithPenalty = (*objfunc).GetValWithPenalty(coeff);
         obj = (*objfunc).GetVal();
 
+        convergence << obj << " ";
+        convergenceWithPenalty << objWithPenalty << " ";
+
         Originiterations << (*Model).get_ITERATION() << endl;
         TotalOriginIt += (*Model).get_ITERATION();
 
@@ -443,9 +446,6 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         }
 
 
-
-
-
         double epsilon_final = epsilon;
 
         // HEEYOOO!!!!!
@@ -558,107 +558,6 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 
 }
 
-tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin){
-    int N = (*CurrentModel).get_N();
-    SpacePara* spacepara = (*CurrentModel).get_spacepara();
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
-    VectorXi* Free = (*spacepara).get_Free();
-
-    VectorXd* diel_old = (*CurrentModel).get_diel_old();
-    VectorXcd* material = (*CurrentModel).get_material();
-    double lam = (*CurrentModel).get_lam();
-    double K = (*CurrentModel).get_K();
-    double d = (*CurrentModel).get_d();
-    Vector3d n_E0 = (*CurrentModel).get_nE0();
-    Vector3d n_K = (*CurrentModel).get_nK();
-    VectorXcd* al = (*CurrentModel).get_al();
-    VectorXcd* P = (*CurrentModel).get_P();
-
-    VectorXcd Adevxp=VectorXcd::Zero(3*N);
-
-    int n_para=(*Free).size();
-    int n_para_all = (*Para).size();
-    
-    VectorXd devx=VectorXd::Zero(n_para);
-    vector<list<int>> Paratogeometry(n_para_all);
-    //cout << "n_para:  " << n_para << endl;
-    //cout << "geometry_Para size: " << (*geometryPara).size() << endl;
-    for (int i = 0; i <= N - 1; i++) {
-        (Paratogeometry[(*geometryPara)(i)]).push_back(i);
-    }
-
-
-
-    //Vector3d diel_old_tmp = Vector3d::Zero();
-    //Vector3cd diel_tmp = Vector3cd::Zero();
-
-    for(int i = 0; i <= n_para - 1; i++){
-        int FreeParaPos = (*Free)(i);
-
-        double diel_old_tmp = (*Para)(FreeParaPos);
-        int sign = 0;
-        if (diel_old_tmp >= epsilon) {
-            sign = -1;
-        }
-        else {
-            sign = 1;
-        }
-        diel_old_tmp += sign * epsilon;
-
-        
-
-        //because i am changing diel_old_tmp as local variable and this does not influence diel_old, the singleresponse will not respond to this change
-        //if (Obj->Have_Devx) Obj->SingleResponse(position1, true);
-        int labelfloor = int(floor((*diel_old)(i)));
-        int labelnext = labelfloor + 1;
-        if (labelfloor >= 1) {
-            labelnext = labelfloor;
-        }
-        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
-
-        //if (Obj->Have_Devx) Obj->SingleResponse(position1, false);
-        complex<double> oneoveralpha = (1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K));
-        
-        
-        list<int>::iterator it = Paratogeometry[FreeParaPos].begin();
-        for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
-            int position = *it;
-            complex<double> change = (oneoveralpha - (*al)(3 * position)) / (sign * epsilon);
-            Adevxp(3 * position) = change;
-            Adevxp(3 * position+1) = change;
-            Adevxp(3 * position+2) = change;
-            it++;
-        }
-                   
-        devx(i)=(Obj->GroupResponse()-origin)/(sign*epsilon);
-        /*
-        if(Obj->Have_Devx) Obj->SingleResponse(position1, true);
-                
-        if(Obj->Have_Devx) Obj->SingleResponse(position1, false);
-
-        it2 = (*it1).begin();
-
-        for (int j = 0; j <= (*it1).size()-1; j++) {
-            int position2 = (*it2);
-                  
-            if(Obj->Have_Devx) Obj->SingleResponse(position2, true);                  
-                    
-            if(Obj->Have_Devx) Obj->SingleResponse(position2, false);
-
-            it2++;
-                    
-        }
-        */
-            
-    }
-    for(int i=0;i<=3*N-1;i++){
-        Adevxp(i) = Adevxp(i) * ((*P)(i));
-    }
-
-    return make_tuple(devx, Adevxp);  
-}
-
 tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin) {
     int N = (*CurrentModel).get_N();
     SpacePara* spacepara = (*CurrentModel).get_spacepara();
@@ -676,13 +575,6 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     }
     */
     
-    VectorXd* diel_old = (*CurrentModel).get_diel_old();
-    VectorXcd* material = (*CurrentModel).get_material();
-    double lam = (*CurrentModel).get_lam();
-    double K = (*CurrentModel).get_K();
-    double d = (*CurrentModel).get_d();
-    Vector3d n_E0 = (*CurrentModel).get_nE0();
-    Vector3d n_K = (*CurrentModel).get_nK();
     VectorXcd* al = (*CurrentModel).get_al();
     VectorXcd* P = (*CurrentModel).get_P();
 

@@ -198,7 +198,7 @@ if config1['Model Name']['name']=="EvoOpt 2D input periodic" and config["Plot"][
             for penaltytype in penaltytypeArray:
 
                 #pos = ".\\cylinder_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytype + "_absolute_0.0to0.5\\"
-                pos = "..\\Calculations\\SmallerGridCheck12x12x4\\"
+                pos = "..\\Calculations\\Random Initial Structure\\arandominitialstructureall_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\"
 
                 plt.figure(1)
                 objectfunc = np.loadtxt(pos + "\\convergence.txt")
@@ -224,7 +224,7 @@ if config1['Model Name']['name']=="EvoOpt 2D input periodic" and config["Plot"][
                         nameit=int((filename[cutnumber:])[:-4])
                         print(nameit)
                         CoreStructure=np.genfromtxt(os.path.join(pos+"CoreStructure\\","CoreStructure"+str(nameit)+".txt"),dtype=complex)
-                        Modelresults=np.genfromtxt(os.path.join(pos+"Model_output\\","Model_results0"+"it"+str(nameit)+".txt"),dtype=complex)
+                        Modelresults=np.genfromtxt(os.path.join(pos+"Model_output\\","Model_results"+"it"+str(nameit)+".txt"),dtype=complex)
                     
                         diel=np.real(CoreStructure[(0):(3*N)])
                         E_tot=(Modelresults[(0):(3*N)])

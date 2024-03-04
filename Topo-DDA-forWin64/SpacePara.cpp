@@ -1086,6 +1086,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_
 
 }
 
+// vector of structures and BPara removed
 SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_) {
     Filter = Filter_;
     space = space_;
@@ -1093,7 +1094,7 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
     VectorXi* total_space = InputGeo;
     int Nx, Ny, Nz, N;
     tie(Nx, Ny, Nz, N) = (*space).get_Ns();
-    geometry = VectorXi::Zero(3 * N);
+    geometry = *InputGeo;
     Periodic = Periodic_;
     Lx = Lx_;
     Ly = Ly_;
@@ -1103,32 +1104,12 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
     }
 
     Structure* structure = (*space).get_structure();
-    //vector<Structure>* ln = (*space).get_ln();
-    //cout << "ln size is: " << (*ln).size() << endl;         // should be just 1
-    //cout << "ln geometry size is: " << (*ln)[0].get_geometry_size() << endl;        // number of pixels
-
-    int n1 = 3 * (*structure).get_geometry_size();
-    // assigns geometry to the structure's geometry in 'space'
-    for (int i = 0; i < n1; i++) {
-
-        geometry(i) = (*((*structure).get_geometry()))(i);
-
-    }
     geometryPara = VectorXi::Zero(N);
     scope = find_scope_3_dim(&geometry);
-
-    vector<VectorXi*> FParaGeometry_;
-
-    FParaGeometry_.push_back((*structure).get_geometry());
-
-    cout << "FParaGeometry_ size: " << FParaGeometry_.size() << endl;       // size is 1 because ln.size is 1
-
-    VectorXi FParaGeometry = ConnectGeometry(FParaGeometry_);       // this is just geometry of our structure. 3N
-
-    cout << "FParaGeometry size: " << FParaGeometry.size() << endl;
-    set<vector<int>> FParaGeometrySet = Get3divSet(&FParaGeometry);
-    //MatrixXi FParascope = find_scope_3_dim(&FParaGeometry);
-    int NFpara;
+    
+    // set of 1D vectors of size 3, representing each pixel. {[0,0,0], [1,0,0], ..., [Nx-1,Ny-1,Nz-1]}
+    set<vector<int>> geometrySet = Get3divSet(&geometry);
+    int NFpara;     // number of free parameters. for extruded, symmetric, take one quadrant of one xy-plane of geo. 121 in standard case
 
     int dividesym;
     if (symmetry == "None") {
@@ -1142,67 +1123,58 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
         throw 1;
     }
 
-    NFpara = int(round((int(FParaGeometry.size()) / 3 / bind(2) / dividesym)));     // number of pixels in xy plane divided by symmetry 
+    NFpara = int(round((int(geometry.size()) / 3 / bind(2) / dividesym)));     // number of pixels in xy plane divided by symmetry 
     cout << "NFpara" << NFpara << endl;
 
-    VectorXd Para1 = VectorXd::Zero(NFpara);
-    //vector<VectorXd> Paratmplist;
-    int initialcount = 0;
-    int NFParacount = 0;
-    for (int i = 0; i < FParaGeometry_.size(); i++) {
-        int NFparatmp = int(round((int((*FParaGeometry_[i]).size()) / 3 / bind(2) / dividesym)));
-        cout << "NFparatmp" << NFparatmp << endl;
-        ParaDividePos.push_back(NFParacount);               // vector of ints. defined in header file
-        NFParacount += NFparatmp;
-        //Paratmplist.push_back(initial_diel_func(initial_diel_list[initialcount], NFparatmp));
-        //initialcount += 1;
-    }
-
+    Para = VectorXd::Zero(NFpara);
+    
+    // seems useless because FreeparatoPara is just integers between 1 and NFPara (121), but it is used in devx as "get_Free()".
+    // need to refactor that part before deleting this variable
     FreeparatoPara = VectorXi::Zero(NFpara);                              //Points to the position of free para in Para. In this function, actually it is the first NFpara elements in Para.
     for (int i = 0; i <= NFpara - 1; i++) {
         FreeparatoPara(i) = i;
     }
-    cout << "FreeparaToParaDONE" << endl;
-    int Npara = NFpara;
 
-    Para = VectorXd::Zero(Npara);
-    for (int i = 0; i <= NFpara - 1; i++) {
-        // cout << "Para1 at position " << i << "is: " << Para1[i] << endl;
-        Para(i) = Para1(i);                     // but Para1 is empty...
-    }
-
-    map<vector<int>, int> FCurrent;
+    // stores an index that can be used to find a free parameter. uses symmetry and reflections in FCurrentInsert to
+    // keep the range [0,120]. for example, geometryPara(Nx-1) = 1, geometry(Nx) = 0 because of symmetry
+    // can uncomment print statement below if still confused on geometryPara.
+    geometryPara = VectorXi::Zero(N);
+    map<vector<int>, int> FCurrent;         // only used to design geometryPara, so can be removed if geometryPara designed differently
     int currentpos = 0;
     for (int i = 0; i <= N - 1; i++) {
         int x = geometry(3 * i);
         int y = geometry(3 * i + 1);
-        int z = geometry(3 * i + 2);
-        vector<int> tmp{ x,y,z };
-        if (FParaGeometrySet.count(tmp)) {
 
-            vector<int> currentxy{ x,y };
-            if (!FCurrent.count(currentxy)) {
+        vector<int> currentxy{ x,y };
 
-                FCurrentinsert(&FCurrent, currentxy, &currentpos, symmetry, &symaxis);
-            }
-            geometryPara(i) = FCurrent[currentxy];                                     //The first NFpara elements in Para is the elements in FreeParatoPara 
+        // for extruded geometries, same xy position can be used to refer to pixels that have different z-coord.
+        if (!FCurrent.count(currentxy)) {
+
+            FCurrentinsert(&FCurrent, currentxy, &currentpos, symmetry, &symaxis);
         }
+        geometryPara(i) = FCurrent[currentxy];                                     
+        //cout << "geometryPara(" << i << ") is: " << geometryPara(i) << endl;
     }
 
-    cout << "GEOMETRYPARA SIZE: " << geometryPara.size() << endl;
-    cout << "NPara SIZE: " << Npara << endl;
-    Paratogeometry = vector<vector<int>>(Npara);
+    // This is used to map a free parameter position (0 to NFPara, or 121) to a vector of
+    // positions that this free parameter maps to, considering relfections and extrusions.
+    // for example, the first vector would be (0, Nx, Nx*Ny-Nx, Nx*Ny, ...). if Nz is 10,
+    // and you have symmetry, each position will map to 10*4, or 40 other pixels.
 
+    Paratogeometry = vector<vector<int>>(NFpara);
     for (int i = 0; i <= N - 1; i++) {
-        cout << "geometryPara(i) at " << i << " is: " << geometryPara(i) << endl;
+        //cout << "dipole position : " << i << endl;
 
-        if (i == 6561) {
-            cout << "for i:" << geometryPara(i) << endl;
-        }
         (Paratogeometry[geometryPara(i)]).push_back(i);
 
+        /*vector<int> currentvector = Paratogeometry[geometryPara(i)];
+        for (int j = 0; j < currentvector.size(); j++) {
+            cout << "Paratogeometry at index " << j << " is: " << currentvector[j] << endl;
+        } */
+        
     }
 
+    // used to map a pixel vector to its inputdiel value (0-1)
     map<vector<int>, double> Inputmap;
     if ((*InputGeo).size() != (*Inputdiel).size()) {
         cout << "ERROR: SpacePara::SpacePara: Filter==(*InputGeo).size() != (*Inputdiel).size()" << endl;
@@ -1212,20 +1184,22 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
     for (int i = 0; i < Inputsize; i++) {
         Inputmap.insert(pair<vector<int>, double>(vector<int>{(*InputGeo)(3 * i), (*InputGeo)(3 * i + 1), (*InputGeo)(3 * i + 2)}, (*Inputdiel)(3 * i)));
     }
-    for (int i = 0; i < Npara; i++) {
-        /*cout << i << endl;*/
+
+    // used to fill Para, which are the parameter values of the free indices (NFpara)
+    // or one quadrant in a symmetric, extruded structure. using Paratogeometry here
+    // to fetch each position, but if this is the only use of Paratogeometry, seems useless.
+    for (int i = 0; i < NFpara; i++) {
+
         int pos = Paratogeometry[i][0];
+        cout << "Pos at position " << i << " is: " << pos << endl;
         vector<int> node{ geometry(3 * pos), geometry(3 * pos + 1), geometry(3 * pos + 2) };
-        if (Inputmap.count(node)) {
-            Para(i) = Inputmap[node];
-        }
+        Para(i) = Inputmap[node];
     }
     cout << "para values:" << endl;
 
     for (int i = 0; i < Para.size(); i++) {
         cout << Para(i) << " ";
     }
-
 
     if (Filter == true) {
         Para_origin = Para;
@@ -1247,7 +1221,7 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
 
 
 
-            for (int j = 0; j <= Npara - 1; j++) {
+            for (int j = 0; j <= NFpara - 1; j++) {
                 //bool inornot = false;
                 //cout << j << endl;
                 for (int k = 0; k < Paratogeometry[j].size(); k++) {
@@ -1366,9 +1340,6 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
             }
         }
     }
-
-
-
 
 }
 

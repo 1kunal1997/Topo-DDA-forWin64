@@ -1,13 +1,16 @@
 name = "DDA_template.mph";
 model = mphload(name);
-data = importdata('E:\Topo-DDA-forWin64\Calculations\Nonconstant Penalty Coefficients\cylinder_it350_lam542_sym_epsilon_0.1_penaltytype_piecewise_absolute0.0to0.5\CoreStructure\CoreStructure349Rounded.txt');
+data = importdata('E:\Topo-DDA-forWin64\Calculations\Random Initial Structure\randomdist_it300_lam542_sym_filterTrue_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute0.0to0.5\CoreStructure\CoreStructure299Rounded.txt');
 
 %remove this if you want hybrid material!!!
-bitmask = data;
+%bitmask = data;
+bitmask = round(data);
+
 Nx = 22;
 Ny = 22;
 Nz = 10;
 dist = 15;
+
 d=strcat(num2str(dist),'[nm]');
 h = Nz*dist;
 height = strcat(num2str(h),'[nm]');
@@ -372,4 +375,4 @@ model.sol('sol1').feature('s1').feature('dDef').active(true);
 model.geom.run();
 disp("im done");
 
-model.save('E:\Topo-DDA-forWin64\Topo-DDA-forWin64\DDA_geo_cylinder_it350_piecewise_absolute_fullmodel.mph')
+model.save('E:\Topo-DDA-forWin64\Calculations\Random Initial Structure\randomdist_it300_lam542_sym_filterTrue_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute0.0to0.5\binarizedit299.mph')

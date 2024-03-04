@@ -248,7 +248,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material
     
 }
 
-// HEEYO!
+// HEEYO! just loading things on the cuda device
 AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_) {
     MAXm = MAXm_;
     MAXn = MAXn_;
@@ -501,21 +501,27 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material
     if (cufftExecZ2Z(Plan, A00, A00, CUFFT_FORWARD) != CUFFT_SUCCESS) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
+    cout << "A00 done" << endl;
     if (cufftExecZ2Z(Plan, A01, A01, CUFFT_FORWARD) != CUFFT_SUCCESS) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
+    cout << "A01 done" << endl;
     if (cufftExecZ2Z(Plan, A02, A02, CUFFT_FORWARD) != CUFFT_SUCCESS) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
+    cout << "A02 done" << endl;
     if (cufftExecZ2Z(Plan, A11, A11, CUFFT_FORWARD) != CUFFT_SUCCESS) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
+    cout << "A11 done" << endl;
     if (cufftExecZ2Z(Plan, A12, A12, CUFFT_FORWARD) != CUFFT_SUCCESS) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
+    cout << "A12 done" << endl;
     if (cufftExecZ2Z(Plan, A22, A22, CUFFT_FORWARD) != CUFFT_SUCCESS) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
+    cout << "A22 done" << endl;
 
 
 

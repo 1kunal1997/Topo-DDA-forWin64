@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <random>
 
 #include "EvoDDAModel.h"
 #include "filterReader.h"
@@ -398,7 +399,7 @@ void task() {
         std::vector<double> epsilonArray = {0.1};
         std::vector<double> weightArray = {0.2};
         std::vector<int> projectionArray = { 5, 10, 20, 50 };
-        std::vector<string> penaltytypeArray = {"linear"};
+        std::vector<string> penaltytypeArray = {"piecewise absolute"};
         double d;
 
         for (int i = 0; i < epsilonArray.size(); i++) {
@@ -410,9 +411,9 @@ void task() {
                 for (int k = 0; k < penaltytypeArray.size(); k++) {
                     //create directories
 
-                    std::string directoryName = "..\\Calculations\\cylinder_it200_lam542_sym_epsilon_0.1_penaltytype_linear0.0to0.5_repeat\\";
+                    std::string directoryName = "..\\Calculations\\Random Initial Structure\\arandominitialstructureall_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\";
                     cout << "Storing data in : " << directoryName << endl;
-                    //std::string directoryName = ".\\cylinder_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
+                    //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");
                     std::filesystem::create_directories(directoryName + "/E-Field");
@@ -428,6 +429,32 @@ void task() {
                     string pathPara = reader2.Get("Geometry", "pathPara", "UNKNOWN");
                     cout << "path common data file is: " << pathCommonData << endl;
                     tie(Nx, Ny, Nz, N, inputGeo, inputDiel) = getInputs(pathCommonData, pathPara);
+
+                    // next 20 lines are if you want a random, symmetric distribution of pixel values
+                    /*inputDiel = VectorXd::Zero(3 * N);
+                    std::default_random_engine rnd{ std::random_device{}() };
+                    std::uniform_real_distribution<double> dist(0, 1);
+
+                    VectorXd inputdielxy = VectorXd::Zero(Nx * Ny);
+                    int numxypixels = Nx * Ny;
+                    for (int i = 0; i < numxypixels / 4; i++) {
+                        int column = floor(i / (Nx / 2)) * Nx;
+                        int row = i % (Nx / 2);
+                        double r = dist(rnd);
+                        //int index = i + (column * Nx / 2);
+                        inputdielxy(column + row) = r;                   // original pixel
+                        inputdielxy(column + Nx - row - 1) = r;       // reflection over y
+                        inputdielxy(numxypixels - column - row - 1) = r;       // reflection over x and y
+                        inputdielxy(numxypixels - Nx - column + row) = r;     // reflection over x
+                    }
+
+                    for (int i = 0; i < N; i++) {
+                        double pixelvalue = inputdielxy(i % numxypixels);
+                        inputDiel(3 * i) = pixelvalue;
+                        inputDiel(3 * i + 1) = pixelvalue;
+                        inputDiel(3 * i + 2) = pixelvalue;
+                        
+                    } */
 
                     string save_position = reader2.Get("Output", "saveDir", "UNKNOWN");       //output file
                     
@@ -484,6 +511,7 @@ void task() {
                     symReader readSymmetry(reader2);
                     string symmetry = readSymmetry.getSymmetry();
                     vector<double> symAxis = readSymmetry.getSymAxis();
+                    cout << "Periodicity is: " << readTheFilter.getPeriodic() << endl;
                     SpacePara spacepara(bind, &S, &inputGeo, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln); // line 1088 in SpacePara
                     CoreStructure CStr(&spacepara, d);
                     double nback = sqrt(real(material(0)));

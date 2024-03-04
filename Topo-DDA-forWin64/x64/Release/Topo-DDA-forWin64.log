@@ -1,90 +1,75 @@
-﻿  EvoDDAModel.cpp
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(34,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(67,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(78,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(188,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(208,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(334,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(335,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+﻿  SpacePara.cpp
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(51,11): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
           with
           [
               Derived=Eigen::Matrix<int,-1,1,0,-1,1>
           ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(580,15): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(156,23): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(172,19): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(221,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(222,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(223,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(240,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(241,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(242,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(243,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(270,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(271,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(272,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(302,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(303,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(304,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(321,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(322,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(323,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(324,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(325,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(326,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(355,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(356,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(357,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(387,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(388,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(389,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(405,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(406,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(407,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(408,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(451,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(452,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(453,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(470,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(471,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(472,96): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(473,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(474,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(475,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1726,15): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+          ]
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1727,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
           with
           [
               Derived=Eigen::Matrix<int,-1,1,0,-1,1>
           ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(581,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1917,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1918,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1919,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1927,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1928,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1929,19): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\SpacePara.cpp(1933,46): warning C4244: '+=': conversion from 'double' to '_Ty', possible loss of data
           with
           [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
+              _Ty=int
           ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(691,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(692,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(885,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(906,87): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1039,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1040,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1295,77): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1319,87): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1456,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1457,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1872,24): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(1873,20): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<int,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(2127,16): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'int', possible loss of data
-          with
-          [
-              Derived=Eigen::Matrix<double,-1,1,0,-1,1>
-          ]
-E:\Topo-DDA-forWin64\Topo-DDA-forWin64\EvoDDAModel.cpp(2139,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  main.cpp
+E:\Topo-DDA-forWin64\Topo-DDA-forWin64\main.cpp(658,83): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
   Generating code
-  557 of 4588 functions (12.1%) were compiled, the rest were copied from previous compilation.
-    53 functions were new in current compilation
-    303 functions had inline decision re-evaluated but remain unchanged
+  1 of 4583 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    114 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Topo-DDA-forWin64.vcxproj -> E:\Topo-DDA-forWin64\x64\Release\Topo-DDA-forWin64.exe

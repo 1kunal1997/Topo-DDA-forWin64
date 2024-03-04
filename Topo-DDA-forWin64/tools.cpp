@@ -832,13 +832,13 @@ double piecewise_update(const double x, const double x_max, const double y_min, 
 }
 
 double piecewise_update_absolute(const double x, const double x_max, const double y_min, const double y_max) {
-    if (x <= 125) {
+    if (x <= 100) {
         return y_min;
     }
-    else if (125 < x && x <= 175) {
+    else if (100 < x && x <= 140) {
         return y_min + (y_max - y_min) / 5;
     }
-    else if (175 < x && x <= 200) {
+    else if (140 < x && x <= 160) {
         return y_min + (y_max - y_min) / 2.5;
     }
     else {
