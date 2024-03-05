@@ -1135,9 +1135,9 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
         FreeparatoPara(i) = i;
     }
 
-    // stores an index that can be used to find a free parameter. uses symmetry and reflections in FCurrentInsert to
-    // keep the range [0,120]. for example, geometryPara(Nx-1) = 1, geometry(Nx) = 0 because of symmetry
-    // can uncomment print statement below if still confused on geometryPara.
+    // stores an index that can be used to find the free parameter index associated with that index.
+    // uses symmetry and reflections in FCurrentInsert to keep the range [0,120]. for example, 
+    // geometryPara(Nx-1) = 1, geometry(Nx) = 0, geometry(Nx*Ny+1)=0 because of symmetry/extrusions.
     geometryPara = VectorXi::Zero(N);
     map<vector<int>, int> FCurrent;         // only used to design geometryPara, so can be removed if geometryPara designed differently
     int currentpos = 0;
@@ -1173,7 +1173,7 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
         } */
         
     }
-
+    
     // used to map a pixel vector to its inputdiel value (0-1)
     map<vector<int>, double> Inputmap;
     if ((*InputGeo).size() != (*Inputdiel).size()) {
@@ -1191,7 +1191,7 @@ SpacePara::SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd
     for (int i = 0; i < NFpara; i++) {
 
         int pos = Paratogeometry[i][0];
-        cout << "Pos at position " << i << " is: " << pos << endl;
+        //cout << "Pos at position " << i << " is: " << pos << endl;
         vector<int> node{ geometry(3 * pos), geometry(3 * pos + 1), geometry(3 * pos + 2) };
         Para(i) = Inputmap[node];
     }

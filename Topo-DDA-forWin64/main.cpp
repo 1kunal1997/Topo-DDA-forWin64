@@ -411,7 +411,7 @@ void task() {
                 for (int k = 0; k < penaltytypeArray.size(); k++) {
                     //create directories
 
-                    std::string directoryName = "..\\Calculations\\Random Initial Structure\\arandominitialstructureall_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\";
+                    std::string directoryName = "..\\Calculations\\Random Initial Structure\\arandominitialstructuredebug_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\";
                     cout << "Storing data in : " << directoryName << endl;
                     //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     std::filesystem::create_directories(directoryName);

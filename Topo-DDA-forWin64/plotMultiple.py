@@ -198,7 +198,7 @@ if config1['Model Name']['name']=="EvoOpt 2D input periodic" and config["Plot"][
             for penaltytype in penaltytypeArray:
 
                 #pos = ".\\cylinder_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytype + "_absolute_0.0to0.5\\"
-                pos = "..\\Calculations\\Random Initial Structure\\arandominitialstructureall_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\"
+                pos = "..\\Calculations\\Random Initial Structure\\arandominitialstructuredebug_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\"
 
                 plt.figure(1)
                 objectfunc = np.loadtxt(pos + "\\convergence.txt")

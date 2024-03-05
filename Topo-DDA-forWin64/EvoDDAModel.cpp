@@ -559,138 +559,66 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 }
 
 tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin) {
+    
     int N = (*CurrentModel).get_N();
     SpacePara* spacepara = (*CurrentModel).get_spacepara();
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
-    VectorXi* Free = (*spacepara).get_Free();
-    //vector<list<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
-    
-    /*
-    list<int> tmplist = (*Paratogeometry)[3000];
-    list<int>::iterator tmpit = (*Paratogeometry)[2021].begin();
-    for (int i = 0; i <= (*Paratogeometry)[3000].size() - 1; i++) {
-        cout << (*tmpit) << endl;
-        tmpit++;
-    }
-    */
-    
-    VectorXcd* al = (*CurrentModel).get_al();
+    VectorXd* Para = (*spacepara).get_Para();           // the values (0-1) of the free parameters ONLY (one quadrant, 2D)
+    vector<vector<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
+
+    VectorXcd* al = (*CurrentModel).get_al();       // members from DDAModel
     VectorXcd* P = (*CurrentModel).get_P();
 
-    VectorXcd Adevxp = VectorXcd::Zero(3 * N);
-
-    int n_para = (*Free).size();
     int n_para_all = (*Para).size();
+    VectorXcd Adevxp = VectorXcd::Zero(3 * N);
+    VectorXd devx = VectorXd::Zero(n_para_all);
 
-    VectorXd devx = VectorXd::Zero(n_para);
-    
-    //cout << "n_para:  " << n_para << endl;
-    //cout << "geometry_Para size: " << (*geometryPara).size() << endl;
-    
+    cout << "n_para_all is: " << n_para_all << endl;
 
-
-
-    vector<list<int>> Paratogeometry(n_para_all);
-    for (int i = 0; i <= N - 1; i++) {
-        (Paratogeometry[(*geometryPara)(i)]).push_back(i);
-    }
-
-    if (!(*spacepara).get_Filter()) {
-        for (int i = 0; i <= n_para - 1; i++) {
-            int FreeParaPos = (*Free)(i);
-
-            double diel_old_origin = (*Para)(FreeParaPos);
-            double diel_old_tmp = diel_old_origin;
-            int sign = 0;
-            if (diel_old_origin >= epsilon) {
-                sign = -1;
-            }
-            else {
-                sign = 1;
-            }
-            diel_old_tmp += sign * epsilon;
-
-
-
-            list<int>::iterator it = Paratogeometry[FreeParaPos].begin();
-            for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
-                //cout << (*it) << endl;
-                int position = *it;
-                complex<double> alphaorigin = (*al)(3 * position);
-                if (Obj->Have_Devx) Obj->SingleResponse(position, true);
-                (*CStr).UpdateStrSingle(position, diel_old_tmp);
-                (*CurrentModel).UpdateAlphaSingle(position);
-                if (Obj->Have_Devx) Obj->SingleResponse(position, false);
-                complex<double> change = ((*al)(3 * position) - alphaorigin) / (sign * epsilon);
-                Adevxp(3 * position) = change;
-                Adevxp(3 * position + 1) = change;
-                Adevxp(3 * position + 2) = change;
-
-                it++;
-            }
-
-            devx(i) = (Obj->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
-            it = Paratogeometry[FreeParaPos].begin();
-            for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
-                int position = *it;
-                if (Obj->Have_Devx) Obj->SingleResponse(position, true);
-                (*CStr).UpdateStrSingle(position, diel_old_origin);
-                (*CurrentModel).UpdateAlphaSingle(position);
-                if (Obj->Have_Devx) Obj->SingleResponse(position, false);
-                it++;
-            }
-
+    for (int i = 0; i < n_para_all; i++) {
+        int FreeParaPos = i;
+        if (FreeParaPos != i) {
+            cout << "----------------------------ERROR IN FREEPARAPOS!!--------------------------" << endl;
         }
-    }
-    else {
-        for (int i = 0; i <= n_para - 1; i++) {
-            int FreeParaPos = (*Free)(i);
-
-            double diel_old_origin = (*Para)(FreeParaPos);
-            double diel_old_tmp = diel_old_origin;
-            int sign = 0;
-            if (diel_old_origin >= epsilon) {
-                sign = -1;
-            }
-            else {
-                sign = 1;
-            }
-            diel_old_tmp += sign * epsilon;
-
-
-
-            list<int>::iterator it = Paratogeometry[FreeParaPos].begin();
-            for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
-                //cout << (*it) << endl;
-                int position = *it;
-                complex<double> alphaorigin = (*al)(3 * position);
-                if (Obj->Have_Devx) Obj->SingleResponse(position, true);
-                (*CStr).UpdateStrSingle(position, diel_old_tmp);
-                (*CurrentModel).UpdateAlphaSingle(position);
-                if (Obj->Have_Devx) Obj->SingleResponse(position, false);
-                complex<double> change = ((*al)(3 * position) - alphaorigin) / (sign * epsilon);
-                Adevxp(3 * position) = change;
-                Adevxp(3 * position + 1) = change;
-                Adevxp(3 * position + 2) = change;
-
-                it++;
-            }
-
-            devx(i) = (Obj->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
-            it = Paratogeometry[FreeParaPos].begin();
-            for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
-                int position = *it;
-                if (Obj->Have_Devx) Obj->SingleResponse(position, true);
-                (*CStr).UpdateStrSingle(position, diel_old_origin);
-                (*CurrentModel).UpdateAlphaSingle(position);
-                if (Obj->Have_Devx) Obj->SingleResponse(position, false);
-                it++;
-            }
-
+        double diel_old_origin = (*Para)(FreeParaPos);
+        double diel_old_tmp = diel_old_origin;
+        int sign = 0;
+        if (diel_old_origin >= epsilon) {
+            sign = -1;
         }
+        else {
+            sign = 1;
+        }
+        diel_old_tmp += sign * epsilon;
+
+        vector<int>::iterator it = (*Paratogeometry)[FreeParaPos].begin();
+        for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
+            //cout << (*it) << endl;
+            int position = *it;
+            complex<double> alphaorigin = (*al)(3 * position);
+            if (Obj->Have_Devx) Obj->SingleResponse(position, true);
+            (*CStr).UpdateStrSingle(position, diel_old_tmp);
+            (*CurrentModel).UpdateAlphaSingle(position);
+            if (Obj->Have_Devx) Obj->SingleResponse(position, false);
+            complex<double> change = ((*al)(3 * position) - alphaorigin) / (sign * epsilon);
+            Adevxp(3 * position) = change;
+            Adevxp(3 * position + 1) = change;
+            Adevxp(3 * position + 2) = change;
+
+            it++;
+        }
+
+        devx(i) = (Obj->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
+        it = (*Paratogeometry)[FreeParaPos].begin();
+        for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
+            int position = *it;
+            if (Obj->Have_Devx) Obj->SingleResponse(position, true);
+            (*CStr).UpdateStrSingle(position, diel_old_origin);
+            (*CurrentModel).UpdateAlphaSingle(position);
+            if (Obj->Have_Devx) Obj->SingleResponse(position, false);
+            it++;
+        }
+
     }
-    
     
     for (int i = 0; i <= 3 * N - 1; i++) {
         Adevxp(i) = Adevxp(i) * ((*P)(i));
