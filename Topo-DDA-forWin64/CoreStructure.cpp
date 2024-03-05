@@ -32,9 +32,8 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
     cout << "step in UpdateStr" << step.mean() << endl;
     VectorXi* geometryPara = (*spacepara).get_geometryPara();
     VectorXd* Para = (*spacepara).get_Para();
-    VectorXi* Free = (*spacepara).get_Free();
 
-    int Parasize = (*Free).size();
+    int Parasize = (*Para).size();
     if (Parasize != step.size()) {
         cout << "ERROR: In CoreStructure::UpdateStr(VectorXd step), step.size!=FreePara.size";
         throw 1;
@@ -49,12 +48,12 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
         (*Filterstats).update_beta(current_it, Max_it);                  //Update beta value according to current iteration
         
         for (int i = 0; i <= Parasize - 1; i++) {
-            (*Para_origin)((*Free)(i)) += step(i);
-            if ((*Para_origin)((*Free)(i)) >= 1) {
-                (*Para_origin)((*Free)(i)) = 1;
+            (*Para_origin)(i) += step(i);
+            if ((*Para_origin)(i) >= 1) {
+                (*Para_origin)(i) = 1;
             }
-            if ((*Para_origin)((*Free)(i)) <= 0) {
-                (*Para_origin)((*Free)(i)) = 0;
+            if ((*Para_origin)(i) <= 0) {
+                (*Para_origin)(i) = 0;
             }
         }
         
@@ -74,7 +73,7 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
                 cout << "weight: " << (*FreeWeight)[i][j].weight << endl;*/
 
             }
-            (*Para_filtered)((*Free)(i)) = numerator / denominator;
+            (*Para_filtered)(i) = numerator / denominator;
 
             /*cout << "para pos: " << i << endl;
             cout << "weightnum" << weightnum << endl;
@@ -82,19 +81,19 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
             cout << denominator << endl;*/
 
 
-            double Para_physical = (*Filterstats).SmoothDensity((*Para_filtered)((*Free)(i)));     
-            (*Para)((*Free)(i)) = Para_physical;
+            double Para_physical = (*Filterstats).SmoothDensity((*Para_filtered)(i));     
+            (*Para)(i) = Para_physical;
 
         }
     }
     else {//When there is no filter
         for (int i = 0; i <= Parasize - 1; i++) {
-            (*Para)((*Free)(i)) += step(i);
-            if ((*Para)((*Free)(i)) >= 1) {
-                (*Para)((*Free)(i)) = 1;
+            (*Para)(i) += step(i);
+            if ((*Para)(i) >= 1) {
+                (*Para)(i) = 1;
             }
-            if ((*Para)((*Free)(i)) <= 0) {
-                (*Para)((*Free)(i)) = 0;
+            if ((*Para)(i) <= 0) {
+                (*Para)(i) = 0;
             }
         }
     }

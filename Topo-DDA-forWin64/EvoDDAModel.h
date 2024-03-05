@@ -64,7 +64,7 @@ public:
 
     //functions used to calculate partial derivatives                                 
     tuple<VectorXd, VectorXcd> devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin);                       //partial derivative of obj to parameter and A to x times p
-    tuple<VectorXd, VectorXcd> devx_and_Adevxp_tmp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin);
+    tuple<VectorXd, VectorXcd> devx_and_Adevxp_stateless(double epsilon, ObjDDAModel* Obj, double origin, VectorXd* para_, vector<vector<int>>* paratogeometry_);
     VectorXcd devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin);                       //partial derivative of obj to P. Size of P
 
     void EvoOptimization(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
