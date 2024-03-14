@@ -3,15 +3,39 @@
 
 #include "CoreStructure.h"
 
-CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
+/*CoreStructure::CoreStructure(StructureSpacePara* structurespacepara_, double d_) {
 
-    spacepara = spacepara_;
-    space = (*spacepara).get_space();
+    structurespacepara = structurespacepara_;
     d = d_;
 
     cout << "(d=" << d << ") " << endl;
 
-    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    tie(Nx, Ny, Nz, N) = ( *structurespacepara ).get_Ns( );
+
+    //-----------------------------------------------------------------Input strs-------------------------------------------------------------
+    R = *(*structurespacepara).get_geometry( );
+    VectorXi* geometryPara = ( *structurespacepara ).get_geometryPara( );
+    VectorXd* Para = ( *structurespacepara ).get_Para( );
+    //---------------------------------------------------initial diel------------------------------------
+    diel_old = VectorXd::Zero(3 * N);
+    diel_old_max = diel_old;
+    for ( int i = 0; i <= N - 1; i++ ) {
+        double dieltmp = ( *Para )( ( *geometryPara )( i ) );
+        diel_old(3 * i) = dieltmp;
+        diel_old(3 * i + 1) = dieltmp;
+        diel_old(3 * i + 2) = dieltmp;
+    }
+} */
+
+CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
+
+    spacepara = spacepara_;
+    StructureAndSpace* structureandspace = (*spacepara).get_structureAndSpace();
+    d = d_;
+
+    cout << "(d=" << d << ") " << endl;
+
+    tie(Nx, Ny, Nz, N) = (*structureandspace).get_Ns();
 
     //-----------------------------------------------------------------Input strs-------------------------------------------------------------
     R = (*spacepara).get_geometry();
@@ -29,7 +53,7 @@ CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
 }
 
 void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
-    cout << "step in UpdateStr" << step.mean() << endl;
+    cout << "step in UpdateStr: " << step.mean() << endl;
     VectorXi* geometryPara = (*spacepara).get_geometryPara();
     VectorXd* Para = (*spacepara).get_Para();
 
@@ -307,6 +331,9 @@ double CoreStructure::get_d() {
 SpacePara* CoreStructure::get_spacepara() {
     return spacepara;
 }
+/*StructureSpacePara* CoreStructure::get_structurespacepara() {
+    return structurespacepara;
+} */
 VectorXd* CoreStructure::get_diel_old() {
     return &diel_old;
 }

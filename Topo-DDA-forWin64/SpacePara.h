@@ -4,16 +4,18 @@
 #include <list>
 
 #include "Space.h"
+#include "StructureAndSpace.h"
 #include "filterOption.h"
 
 struct WeightPara {
     double weight;
     int position;
-};
+}; 
 
 class SpacePara {
 private:
     Space* space;
+    StructureAndSpace* structureandspace;
     VectorXi geometry;                //3N dimension
     VectorXi geometryPara;            //N dimension. N=number of dipoles. Each position stores the para index in VectorXi Para : 0->Para[0]...
     vector<vector<int>> Paratogeometry;
@@ -40,6 +42,7 @@ public:
     //SpacePara(Space* space_, Vector3i bind_, string initial_diel1, string initial_diel2); //One constant layer at bottom. One design region on top. divide_pos is the divide in geometry array of the two parts.
 
     //SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorXi* geometryPara_);
+    SpacePara(Vector3i bind_, StructureAndSpace* structureandspace_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_);
     SpacePara(Vector3i bind_, Space* space_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_);
     SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
 
@@ -64,6 +67,7 @@ public:
     VectorXi cut(VectorXi* big, VectorXi* smalll);
 
     Space* get_space();
+    StructureAndSpace* get_structureAndSpace();
     VectorXi get_geometry();
     VectorXi* get_geometryPara();
     VectorXd* get_Para();

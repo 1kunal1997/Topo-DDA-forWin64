@@ -823,3 +823,7 @@ VectorXd* DDAModel::get_diel_old_max() {
 SpacePara* DDAModel::get_spacepara() {
     return (*((*Core).get_CStr())).get_spacepara();
 }
+
+/*StructureSpacePara* DDAModel::get_structurespacepara() {
+    return ( *( ( *Core ).get_CStr( ) ) ).get_structurespacepara( );
+} */

@@ -3,12 +3,14 @@
 
 #include "Space.h"
 #include "SpacePara.h"
+//#include "StructureSpacePara.h"
 
 class CoreStructure {
 private:
     //---------------------------------Geometries, not related to wavelength-------------------------------
     Space* space;
     SpacePara* spacepara;
+    //StructureSpacePara* structurespacepara;
     int N;                        //Number of dipoles
     int Nx;                       //scope of space. Nx*Ny*Nz!=N
     int Ny;
@@ -26,6 +28,7 @@ private:
     VectorXd diel_old;                //The 0~1 version of diel, 3*N
     VectorXd diel_old_max;
 public:
+    //CoreStructure(StructureSpacePara* structurespacepara_, double d_);
     CoreStructure(SpacePara* spacepara_, double d_);
     void UpdateStr(VectorXd step, int current_it, int Max_it);
     void UpdateStrCGD(VectorXd step, int current_it, int Max_it);
@@ -41,6 +44,7 @@ public:
     VectorXi* get_R();
     double get_d();
     SpacePara* get_spacepara();
+    //StructureSpacePara* get_structurespacepara( );
     //list<list<int>>* get_PositionDep();
     //VectorXi* get_PositionPara();
     //list<int>* get_para_nums();

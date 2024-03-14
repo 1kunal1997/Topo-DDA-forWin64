@@ -405,15 +405,16 @@ void task() {
         for (int i = 0; i < epsilonArray.size(); i++) {
             // double epsilon = epsilonArray[i];
             cout << "epsilon is: " << epsilonArray[i] << endl;
-            for (int j = 0; j < weightArray.size(); j++) {
+            for (int j = 0; j < 1; j++) {
 
-                cout << "weight number is: " << weightArray[j] << endl;
+                //cout << "weight number is: " << weightArray[j] << endl;
                 for (int k = 0; k < penaltytypeArray.size(); k++) {
                     //create directories
 
-                    std::string directoryName = "..\\Calculations\\Random Initial Structure\\arandominitialstructuredebug2_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\";
-                    cout << "Storing data in : " << directoryName << endl;
                     //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
+                    //std::string directoryName = "..\\Calculations\\Clipped Random Initial Structure\\" + std::to_string(j) + "ClipRandomness_0.4to0.6_it400_lam542_sym_filterOff_periodicFalse_beta0_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_0.0to0.5\\";
+                    std::string directoryName = "..\\Calculations\\Random Initial Structure\\arandominitialstructuredebug5_it300_lam542_sym_filter2only_periodicFalse_beta0_epsilon_0.1_penaltytype_piecewiseabsolute_0.0to0.5\\";
+                    cout << "Storing data in : " << directoryName << endl;
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");
                     std::filesystem::create_directories(directoryName + "/E-Field");
@@ -421,6 +422,7 @@ void task() {
                     std::filesystem::create_directories(directoryName + "/Shape");
                     std::filesystem::create_directories(directoryName + "/ShapeSolid");
 
+                    
                     VectorXi inputGeo;
                     VectorXd inputDiel;
                     int Nx, Ny, Nz;
@@ -431,9 +433,10 @@ void task() {
                     tie(Nx, Ny, Nz, N, inputGeo, inputDiel) = getInputs(pathCommonData, pathPara);
 
                     // next 20 lines are if you want a random, symmetric distribution of pixel values
+
                     /*inputDiel = VectorXd::Zero(3 * N);
                     std::default_random_engine rnd{ std::random_device{}() };
-                    std::uniform_real_distribution<double> dist(0, 1);
+                    std::uniform_real_distribution<double> dist(0.4, 0.6);
 
                     VectorXd inputdielxy = VectorXd::Zero(Nx * Ny);
                     int numxypixels = Nx * Ny;
@@ -463,15 +466,12 @@ void task() {
                          cout << total_space(i) << endl;
                      } */
 
-                    Structure s(&inputGeo);
-                    Space S(Nx, Ny, Nz, N, &s);
+                    //Structure s(&inputGeo);
+                    //Space S(Nx, Ny, Nz, N, &s);
 
-                    Vector3d center;
-                    Vector3d l;
+                    StructureAndSpace s(&inputGeo, Nx, Ny, Nz, N);
+
                     d = stod(reader2.Get("Grid", "d", "UNKNOWN"));
-                    center(0) = Nx / 2;
-                    center(1) = Ny / 2;
-                    center(2) = Nz / 2;
                     /*l << Nx - 1, Ny - 1, Nz - 1;
                     Structure s1(S.get_total_space(), l, center);*/
 
@@ -512,7 +512,9 @@ void task() {
                     string symmetry = readSymmetry.getSymmetry();
                     vector<double> symAxis = readSymmetry.getSymAxis();
                     cout << "Periodicity is: " << readTheFilter.getPeriodic() << endl;
-                    SpacePara spacepara(bind, &S, &inputGeo, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln); // line 1088 in SpacePara
+                    SpacePara spacepara(bind, &s, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln); // line 1088 in SpacePara
+                    //SpacePara spacepara(Nx, Ny, Nz, N, &inputGeo, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln);
+                    cout << "SpacePara created" << endl;
                     CoreStructure CStr(&spacepara, d);
                     double nback = sqrt(real(material(0)));
                     cout << "CoreStructure created" << endl;

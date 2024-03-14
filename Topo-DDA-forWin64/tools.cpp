@@ -812,7 +812,11 @@ vector<double> ReadLam(string input) {
 
 double exp_update(const double x, const double x_max, const double y_min, const double y_max) {
     int base = 100;
-    return y_min + (y_max - y_min) * (pow(base, (x/x_max)) - 1) / (base - 1);
+    if (x <= 300) {
+        return y_min + (y_max - y_min) * (pow(base, (x / x_max)) - 1) / (base - 1);
+    }
+    else
+        return 0.5;
 }
 
 double piecewise_update(const double x, const double x_max, const double y_min, const double y_max) {

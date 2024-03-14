@@ -189,9 +189,6 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         auto out_end = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(out_end - out_start).count();
         output_time += duration;
-        // for the penalty calculation
-        SpacePara* spaceparams = (*CStr).get_spacepara();
-        VectorXd* Params = (*spaceparams).get_Para();
 
         (*Model).InitializeP(PolarizationforOrigin);
         (*Model).bicgstab(MAX_ITERATION, MAX_ERROR);
@@ -374,7 +371,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         Adjointiterations << (*Model).get_ITERATION() << endl;
         TotalAdjointIt += (*Model).get_ITERATION();
 
-
+        cout << "D O N E!" << endl;
         //times lambdaT and Adevxp together
         VectorXcd mult_result;
         mult_result = VectorXcd::Zero(n_para_all);               //multiplication result has the length of parameter
@@ -391,7 +388,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
                 it++;
             }
         }
-
+        cout << "D O N E!" << endl;
         VectorXd mult_result_real = VectorXd::Zero(n_para_all);
         for (int i = 0; i <= n_para_all - 1; i++) {
             complex<double> tmp = mult_result(i);
@@ -409,7 +406,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         if (iteration > 0) {
 
             if (coeff_type == "exp") {
-                coeff = exp_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+                coeff = exp_update(iteration - 1, 299, coeff_min, coeff_max);
             }
             else if (coeff_type == "piecewise") {
                 coeff = piecewise_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
@@ -516,9 +513,9 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
                 (*spacepara).ChangeFilter();
             }
         }
-
-        spaceparams = (*CStr).get_spacepara();
-        Params = (*spaceparams).get_Para();
+        cout << "right before spaceparams sentence" << endl;
+        SpacePara* spaceparams = (*CStr).get_spacepara();
+        VectorXd* Params = (*spaceparams).get_Para();
 
         penalty = calculatePenalty(*Params);
 
