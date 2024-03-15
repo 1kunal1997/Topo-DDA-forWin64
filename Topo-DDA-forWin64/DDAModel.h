@@ -66,8 +66,8 @@ public:
     int get_Nz();
     VectorXi* get_R();
     double get_d();
-    SpacePara* get_spacepara();
-    //StructureSpacePara* get_structurespacepara( );
+    //SpacePara* get_spacepara();
+    StructureSpacePara* get_structurespacepara( );
     double get_lam();
     double get_K();
     VectorXd* get_diel_old();

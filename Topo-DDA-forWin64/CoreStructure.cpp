@@ -3,19 +3,20 @@
 
 #include "CoreStructure.h"
 
-/*CoreStructure::CoreStructure(StructureSpacePara* structurespacepara_, double d_) {
+CoreStructure::CoreStructure(StructureSpacePara* structurespacepara_, double d_) {
 
-    structurespacepara = structurespacepara_;
+    structurespacepara = structurespacepara_; 
+    //StructureAndSpace* structureandspace = ( *structurespacepara ).get_structureAndSpace( );
     d = d_;
 
     cout << "(d=" << d << ") " << endl;
 
-    tie(Nx, Ny, Nz, N) = ( *structurespacepara ).get_Ns( );
+    tie(Nx, Ny, Nz, N) = structurespacepara->get_Ns( );
 
     //-----------------------------------------------------------------Input strs-------------------------------------------------------------
-    R = *(*structurespacepara).get_geometry( );
-    VectorXi* geometryPara = ( *structurespacepara ).get_geometryPara( );
-    VectorXd* Para = ( *structurespacepara ).get_Para( );
+    R = structurespacepara->get_geometry( );
+    VectorXi* geometryPara = structurespacepara->get_geometryPara( );
+    VectorXd* Para = structurespacepara->get_Para( );
     //---------------------------------------------------initial diel------------------------------------
     diel_old = VectorXd::Zero(3 * N);
     diel_old_max = diel_old;
@@ -25,9 +26,9 @@
         diel_old(3 * i + 1) = dieltmp;
         diel_old(3 * i + 2) = dieltmp;
     }
-} */
+} 
 
-CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
+/*CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
 
     spacepara = spacepara_;
     StructureAndSpace* structureandspace = (*spacepara).get_structureAndSpace();
@@ -50,25 +51,25 @@ CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
         diel_old(3 * i + 1) = dieltmp;
         diel_old(3 * i + 2) = dieltmp;
     }
-}
+} */
 
 void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
     cout << "step in UpdateStr: " << step.mean() << endl;
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
+    VectorXi* geometryPara = structurespacepara->get_geometryPara();
+    VectorXd* Para = structurespacepara->get_Para();
 
-    int Parasize = (*Para).size();
+    int Parasize = Para->size();
     if (Parasize != step.size()) {
         cout << "ERROR: In CoreStructure::UpdateStr(VectorXd step), step.size!=FreePara.size";
         throw 1;
     }
     
 
-    if ((*spacepara).get_Filter()) {
+    if (structurespacepara->get_Filter()) {
         //When there is filter
-        VectorXd* Para_origin = (*spacepara).get_Para_origin();
-        VectorXd* Para_filtered = (*spacepara).get_Para_filtered();
-        FilterOption* Filterstats = (*spacepara).get_Filterstats();
+        VectorXd* Para_origin = structurespacepara->get_Para_origin();
+        VectorXd* Para_filtered = structurespacepara->get_Para_filtered();
+        FilterOption* Filterstats = structurespacepara->get_Filterstats();
         (*Filterstats).update_beta(current_it, Max_it);                  //Update beta value according to current iteration
         
         for (int i = 0; i <= Parasize - 1; i++) {
@@ -81,9 +82,9 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
             }
         }
         
-        cout << "Beta at iteration " << current_it << " is " << (*Filterstats).get_beta() << endl;
+        cout << "Beta at iteration " << current_it << " is " << Filterstats->get_beta() << endl;
 
-        vector<vector<WeightPara>>* FreeWeight = (*spacepara).get_FreeWeight();
+        vector<vector<WeightPara>>* FreeWeight = structurespacepara->get_FreeWeight();
         for (int i = 0; i <= Parasize - 1; i++) {
             int weightnum = ((*FreeWeight)[i]).size();
             double numerator = 0.0;
@@ -105,7 +106,7 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
             cout << denominator << endl;*/
 
 
-            double Para_physical = (*Filterstats).SmoothDensity((*Para_filtered)(i));     
+            double Para_physical = Filterstats->SmoothDensity((*Para_filtered)(i));     
             (*Para)(i) = Para_physical;
 
         }
@@ -132,7 +133,7 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
     }
 }
 
-void CoreStructure::UpdateStrCGD(VectorXd step, int current_it, int Max_it) {
+/*void CoreStructure::UpdateStrCGD(VectorXd step, int current_it, int Max_it) {
     cout << "step in UpdateStr" << step.mean() << endl;
     VectorXi* geometryPara = (*spacepara).get_geometryPara();
     VectorXd* Para = (*spacepara).get_Para();
@@ -173,17 +174,17 @@ void CoreStructure::UpdateStrCGD(VectorXd step, int current_it, int Max_it) {
                 numerator += ((*FreeWeight)[i][j].weight) * (*Para_origin)((*FreeWeight)[i][j].position);
                 denominator += ((*FreeWeight)[i][j].weight);
 
-                /*cout << "j: " << j << endl;
-                cout << "para pos: " << (*FreeWeight)[i][j].position << endl;
-                cout << "weight: " << (*FreeWeight)[i][j].weight << endl;*/
+                //cout << "j: " << j << endl;
+                //cout << "para pos: " << (*FreeWeight)[i][j].position << endl;
+                //cout << "weight: " << (*FreeWeight)[i][j].weight << endl;
 
             }
             (*Para_filtered)((*Free)(i)) = numerator / denominator;
 
-            /*cout << "para pos: " << i << endl;
-            cout << "weightnum" << weightnum << endl;
-            cout << numerator << endl;
-            cout << denominator << endl;*/
+            //cout << "para pos: " << i << endl;
+            //cout << "weightnum" << weightnum << endl;
+            //cout << numerator << endl;
+            //cout << denominator << endl;
 
 
             double Para_physical = (*Filterstats).SmoothDensity((*Para_filtered)((*Free)(i)));
@@ -211,7 +212,7 @@ void CoreStructure::UpdateStrCGD(VectorXd step, int current_it, int Max_it) {
         diel_old(3 * i + 1) = value;
         diel_old(3 * i + 2) = value;
     }
-}
+} 
 
 void CoreStructure::UpdateStr(SpacePara* spacepara_){
   
@@ -235,7 +236,7 @@ void CoreStructure::UpdateStr(SpacePara* spacepara_){
         diel_old(3 * i + 1) = value;
         diel_old(3 * i + 2) = value;
     }
-}
+} */
 
 void CoreStructure::UpdateStrSingle(int idx, double value) {
     //vector<list<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
@@ -323,17 +324,17 @@ int CoreStructure::get_Nz() {
     return Nz;
 }
 VectorXi* CoreStructure::get_R() {
-    return &R;
+    return R;
 }
 double CoreStructure::get_d() {
     return d;
 }
-SpacePara* CoreStructure::get_spacepara() {
+/*SpacePara* CoreStructure::get_spacepara() {
     return spacepara;
-}
-/*StructureSpacePara* CoreStructure::get_structurespacepara() {
-    return structurespacepara;
 } */
+StructureSpacePara* CoreStructure::get_structurespacepara() {
+    return structurespacepara;
+}
 VectorXd* CoreStructure::get_diel_old() {
     return &diel_old;
 }
