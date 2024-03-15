@@ -46,111 +46,112 @@ namespace {
             return false;
         }
     }
-}
-int Get3divSize(VectorXi* geometry) {
-    int N = ( *geometry ).size( );
-    if ( N % 3 != 0 ) {
-        cout << "int Get3divSize(VectorXi geometry):Geometry size must be time of 3" << endl;
-        throw N;
-    }
-    return int(round(N / 3));
-}
 
-// return the geometry as a set of pixels, each pixel represented as a vector of 3 ints {[0,0,0], [1,0,0], ...}
-set<vector<int>> Get3divSet(VectorXi* geometry) {
-    set<vector<int>> result;
-    int N = Get3divSize(geometry);
-    for ( int i = 0; i <= N - 1; i++ ) {
-        vector<int> tmp{ ( *geometry )( 3 * i ), ( *geometry )( 3 * i + 1 ), ( *geometry )( 3 * i + 2 ) };
-
-        if ( result.count(tmp) ) {
-            cout << "set<vector<int>> Get3divSet(VectorXi* geometry): Element is already present in the set" << endl;
-            cout << "Which means grid number " << i << " has shown up at least twice which is not allowed" << endl;
-            cout << "Corresponding grid is " << ( *geometry )( 3 * i ) << " " << ( *geometry )( 3 * i + 1 ) << " " << ( *geometry )( 3 * i + 2 ) << endl;
-            throw 1;
+    int Get3divSize(VectorXi* geometry) {
+        int N = ( *geometry ).size( );
+        if ( N % 3 != 0 ) {
+            cout << "int Get3divSize(VectorXi geometry):Geometry size must be time of 3" << endl;
+            throw N;
         }
-        result.insert(tmp);
+        return int(round(N / 3));
     }
-    return result;
-}
 
-list<set<vector<int>>> Get3divSetList(vector<VectorXi*> geometry) {
-    list<set<vector<int>>> result;
-    for ( int i = 0; i < geometry.size( ); i++ ) {
-        set<vector<int>> tmp = Get3divSet(geometry[ i ]);
-        result.push_back(tmp);
+
+    // return the geometry as a set of pixels, each pixel represented as a vector of 3 ints {[0,0,0], [1,0,0], ...}
+    set<vector<int>> Get3divSet(VectorXi* geometry) {
+        set<vector<int>> result;
+        int N = Get3divSize(geometry);
+        for ( int i = 0; i <= N - 1; i++ ) {
+            vector<int> tmp{ ( *geometry )( 3 * i ), ( *geometry )( 3 * i + 1 ), ( *geometry )( 3 * i + 2 ) };
+
+            if ( result.count(tmp) ) {
+                cout << "set<vector<int>> Get3divSet(VectorXi* geometry): Element is already present in the set" << endl;
+                cout << "Which means grid number " << i << " has shown up at least twice which is not allowed" << endl;
+                cout << "Corresponding grid is " << ( *geometry )( 3 * i ) << " " << ( *geometry )( 3 * i + 1 ) << " " << ( *geometry )( 3 * i + 2 ) << endl;
+                throw 1;
+            }
+            result.insert(tmp);
+        }
+        return result;
     }
-    return result;
-}
 
-bool CheckOverlap(VectorXi* geometry1, VectorXi* geometry2) {
-    int n1 = Get3divSize(geometry1);
-    int n2 = Get3divSize(geometry2);
-    for ( int i = 0; i <= n1 - 1; i++ ) {
-        int x1 = ( *geometry1 )( 3 * i );
-        int y1 = ( *geometry1 )( 3 * i + 1 );
-        int z1 = ( *geometry1 )( 3 * i + 2 );
-        for ( int j = 0; j <= n2 - 1; j++ ) {
-            int x2 = ( *geometry2 )( 3 * j );
-            int y2 = ( *geometry2 )( 3 * j + 1 );
-            int z2 = ( *geometry2 )( 3 * j + 2 );
-            if ( x1 == x2 && y1 == y2 && z1 == z2 ) {
-                return false;
+    list<set<vector<int>>> Get3divSetList(vector<VectorXi*> geometry) {
+        list<set<vector<int>>> result;
+        for ( int i = 0; i < geometry.size( ); i++ ) {
+            set<vector<int>> tmp = Get3divSet(geometry[ i ]);
+            result.push_back(tmp);
+        }
+        return result;
+    }
+
+    bool CheckOverlap(VectorXi* geometry1, VectorXi* geometry2) {
+        int n1 = Get3divSize(geometry1);
+        int n2 = Get3divSize(geometry2);
+        for ( int i = 0; i <= n1 - 1; i++ ) {
+            int x1 = ( *geometry1 )( 3 * i );
+            int y1 = ( *geometry1 )( 3 * i + 1 );
+            int z1 = ( *geometry1 )( 3 * i + 2 );
+            for ( int j = 0; j <= n2 - 1; j++ ) {
+                int x2 = ( *geometry2 )( 3 * j );
+                int y2 = ( *geometry2 )( 3 * j + 1 );
+                int z2 = ( *geometry2 )( 3 * j + 2 );
+                if ( x1 == x2 && y1 == y2 && z1 == z2 ) {
+                    return false;
+                }
             }
         }
-    }
 
-    return true;
-}
-
-bool CheckOverlapList(vector<VectorXi*> geometry) {
-    if ( geometry.size( ) <= 1 ) {
         return true;
     }
 
-    for ( int i = 0; i <= int(geometry.size( )) - 2; i++ ) {
-        for ( int j = i + 1; j <= int(geometry.size( )) - 1; j++ ) {
-            if ( !CheckOverlap(geometry[ i ], geometry[ j ]) ) {
-                cout << "geometry " << i << " and geometry " << j << " overlap" << endl;
-                return false;
+    bool CheckOverlapList(vector<VectorXi*> geometry) {
+        if ( geometry.size( ) <= 1 ) {
+            return true;
+        }
+
+        for ( int i = 0; i <= int(geometry.size( )) - 2; i++ ) {
+            for ( int j = i + 1; j <= int(geometry.size( )) - 1; j++ ) {
+                if ( !CheckOverlap(geometry[ i ], geometry[ j ]) ) {
+                    cout << "geometry " << i << " and geometry " << j << " overlap" << endl;
+                    return false;
+                }
             }
         }
-    }
-    return true;
-}
-
-// return 3*N vector of geometry. if multiple structures, connects them into one geometry vector 
-VectorXi ConnectGeometry(vector<VectorXi*> geometry) {
-    if ( !CheckOverlapList(geometry) ) {
-        cout << "CheckOverlapList Fail" << endl;
-        throw 1;
+        return true;
     }
 
-    vector<int> N_record;
-    int N = 0;
-    int Nprev;
-    for ( int i = 0; i < geometry.size( ); i++ ) {
-        cout << "i " << i << endl;
-        Nprev = N;
-        N += Get3divSize(geometry[ i ]);
-        N_record.push_back(N - Nprev);
-    }
-
-    VectorXi result = VectorXi::Zero(3 * N);
-
-    int pos = 0;
-    for ( int i = 0; i < geometry.size( ); i++ ) {
-        for ( int j = 0; j <= N_record[ i ] - 1; j++ ) {
-            result(3 * pos) = ( *geometry[ i ] )( 3 * j );
-            result(3 * pos + 1) = ( *geometry[ i ] )( 3 * j + 1 );
-            result(3 * pos + 2) = ( *geometry[ i ] )( 3 * j + 2 );
-            pos++;
+    // return 3*N vector of geometry. if multiple structures, connects them into one geometry vector 
+    VectorXi ConnectGeometry(vector<VectorXi*> geometry) {
+        if ( !CheckOverlapList(geometry) ) {
+            cout << "CheckOverlapList Fail" << endl;
+            throw 1;
         }
+
+        vector<int> N_record;
+        int N = 0;
+        int Nprev;
+        for ( int i = 0; i < geometry.size( ); i++ ) {
+            cout << "i " << i << endl;
+            Nprev = N;
+            N += Get3divSize(geometry[ i ]);
+            N_record.push_back(N - Nprev);
+        }
+
+        VectorXi result = VectorXi::Zero(3 * N);
+
+        int pos = 0;
+        for ( int i = 0; i < geometry.size( ); i++ ) {
+            for ( int j = 0; j <= N_record[ i ] - 1; j++ ) {
+                result(3 * pos) = ( *geometry[ i ] )( 3 * j );
+                result(3 * pos + 1) = ( *geometry[ i ] )( 3 * j + 1 );
+                result(3 * pos + 2) = ( *geometry[ i ] )( 3 * j + 2 );
+                pos++;
+            }
+        }
+        return result;
+
     }
-    return result;
-
 }
-
 VectorXi StructureSpacePara::cut(VectorXi* big, VectorXi* smalll) {
 
     int number_origin = round(( *smalll ).size( ) / 3);

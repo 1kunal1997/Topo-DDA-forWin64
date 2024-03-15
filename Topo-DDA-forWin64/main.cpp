@@ -14,12 +14,6 @@
 #include "ObjReader.h"
 #include "Tools.h"
 
-
-//---Tmp including head files
-#include "Space.h"
-#include "SpacePara.h"
-
-
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
