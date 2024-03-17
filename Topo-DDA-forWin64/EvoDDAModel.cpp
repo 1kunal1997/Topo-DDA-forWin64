@@ -711,7 +711,6 @@ VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int
     StructureSpacePara* sp = (*CStr).get_structurespacepara();
     FilterOption* fo = (*sp).get_Filterstats();
     const VectorXd* Para_filtered = (*sp).get_Para_filtered();
-    const VectorXi* Free = (*sp).get_Free();
     (*fo).update_beta(current_it, Max_it);                     //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
     const double gbeta = (*fo).get_beta();
     const double gita = (*fo).get_ita();
@@ -747,7 +746,7 @@ VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int
     }
 
     for (int i = 0; i <= NFpara - 1; i++) {
-        int position = (*Free)(i);
+        int position = i;
         double pftmp = (*Para_filtered)(position);
         double ptofd = PtoFderivative(pftmp, gbeta, gita);
         result(position) = result(position) * ptofd * gradients(position);

@@ -152,47 +152,6 @@ namespace {
 
     }
 }
-VectorXi StructureSpacePara::cut(VectorXi* big, VectorXi* smalll) {
-
-    int number_origin = round(( *smalll ).size( ) / 3);
-    MatrixXi big_scope = find_scope_3_dim(big);
-    //cout<<"big_scope "<<big_scope<<endl;
-    list<int> positions_in;
-    int number_out = 0;
-    //cout<<"small_scope "<<find_scope_3_dim(small)<<endl;
-    for ( int i = 0; i <= number_origin - 1; i++ ) {
-        if ( ( ( *smalll )( 3 * i ) < big_scope(0, 0) ) || ( ( *smalll )( 3 * i ) > big_scope(0, 1) ) ||
-            ( ( *smalll )( 3 * i + 1 ) < big_scope(1, 0) ) || ( ( *smalll )( 3 * i + 1 ) > big_scope(1, 1) ) ||
-            ( ( *smalll )( 3 * i + 2 ) < big_scope(2, 0) ) || ( ( *smalll )( 3 * i + 2 ) > big_scope(2, 1) ) ) {
-            number_out += 1;
-        }
-        else {
-            positions_in.push_back(i);
-        }
-    }
-    int number_in = positions_in.size( );
-    VectorXi geometry = VectorXi::Zero(3 * number_in);
-    for ( int i = 0; i <= number_in - 1; i++ ) {
-        int j = positions_in.front( );
-        positions_in.pop_front( );
-        geometry(3 * i) = ( *smalll )( 3 * j );
-        geometry(3 * i + 1) = ( *smalll )( 3 * j + 1 );
-        geometry(3 * i + 2) = ( *smalll )( 3 * j + 2 );
-    }
-    if ( number_out == 0 ) {
-        cout << "The geometry you built is entirely in the space." << endl;
-        cout << "number_origin " << number_origin << endl;
-        cout << "number_real " << number_in << endl;
-    }
-    else {
-        cout << "The geometry you built is at least partially outside of space." << endl;
-        cout << "number_origin " << number_origin << endl;
-        cout << "number_out " << number_out << endl;
-        cout << "number_real " << number_in << endl;
-    }
-
-    return geometry;
-}
 
 // Structure and Space combined constructor
 StructureSpacePara::StructureSpacePara(Vector3i bind_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_) {
@@ -230,17 +189,17 @@ StructureSpacePara::StructureSpacePara(Vector3i bind_, VectorXi* geometry_, int 
         throw 1;
     }
 
-    NFpara = int(round(( int(geometry.size( )) / 3 / bind(2) / dividesym )));     // number of pixels in xy plane divided by symmetry 
+    NFpara = int(round(( int(geometry.size( )) / 3 / Nz / dividesym )));     // number of pixels in xy plane divided by symmetry 
     cout << "NFpara" << NFpara << endl;
 
     Para = VectorXd::Zero(NFpara);
 
     // seems useless because FreeparatoPara is just integers between 1 and NFPara (121), but it is used in devx as "get_Free()".
     // need to refactor that part before deleting this variable
-    FreeparatoPara = VectorXi::Zero(NFpara);                              //Points to the position of free para in Para. In this function, actually it is the first NFpara elements in Para.
+    /*FreeparatoPara = VectorXi::Zero(NFpara);                              //Points to the position of free para in Para. In this function, actually it is the first NFpara elements in Para.
     for ( int i = 0; i <= NFpara - 1; i++ ) {
         FreeparatoPara(i) = i;
-    }
+    } */
 
     // stores an index that can be used to find the free parameter index associated with that index.
     // uses symmetry and reflections in FCurrentInsert to keep the range [0,120]. for example, 
@@ -321,7 +280,7 @@ StructureSpacePara::StructureSpacePara(Vector3i bind_, VectorXi* geometry_, int 
 
         double rfilter = ( *Filterstats ).get_rfilter( );
         for ( int i = 0; i <= NFpara - 1; i++ ) {
-            int poso = Paratogeometry[ FreeparatoPara(i) ][ 0 ];                 //As 2D extrusion is assumed, different z does not matter
+            int poso = Paratogeometry[ i ][ 0 ];                 //As 2D extrusion is assumed, different z does not matter
             int xo = ( geometry )( 3 * poso );
             int yo = ( geometry )( 3 * poso + 1 );
             int zo = ( geometry )( 3 * poso + 2 );
@@ -452,7 +411,7 @@ StructureSpacePara::StructureSpacePara(Vector3i bind_, VectorXi* geometry_, int 
 
 void StructureSpacePara::ChangeFilter( ) {
     int Npara = Para.size( );
-    int NFpara = FreeparatoPara.size( );
+    int NFpara = Para.size( );
 
     double rfilter = ( *Filterstats ).get_rfilter( );
     vector<vector<int>> Paratogeometry(Npara);
@@ -461,7 +420,7 @@ void StructureSpacePara::ChangeFilter( ) {
     }
     vector<vector<WeightPara>> FreeWeight_tmp(NFpara);
     for ( int i = 0; i <= NFpara - 1; i++ ) {
-        int poso = Paratogeometry[ FreeparatoPara(i) ][ 0 ];                 //As 2D extrusion is assumed, different z does not matter
+        int poso = Paratogeometry[ i ][ 0 ];                 //As 2D extrusion is assumed, different z does not matter
         int xo = ( geometry )( 3 * poso );
         int yo = ( geometry )( 3 * poso + 1 );
         int zo = ( geometry )( 3 * poso + 2 );
@@ -635,45 +594,6 @@ void StructureSpacePara::ChangeFilter( ) {
 
 }
 
-void StructureSpacePara::ChangeBind(Vector3i bind_) {
-    bind = bind_;
-    VectorXi geometryPara_before = geometryPara;
-    VectorXd Para_before = Para;
-    int Nparax, Nparay, Nparaz, Npara;
-    Nparax = ceil(( scope(0, 1) - scope(0, 0) + 1 ) / bind(0));
-    Nparay = ceil(( scope(1, 1) - scope(1, 0) + 1 ) / bind(1));
-    Nparaz = ceil(( scope(2, 1) - scope(2, 0) + 1 ) / bind(2));
-    Npara = Nparax * Nparay * Nparaz;
-
-    vector<vector<int>> Paratogeometry(Npara, vector<int>(2, 0));
-    for ( int i = 0; i <= N - 1; i++ ) {
-        double x = ( geometry )( 3 * i );
-        double y = ( geometry )( 3 * i + 1 );
-        double z = ( geometry )( 3 * i + 2 );
-        int parax = floor(( x - scope(0, 0) ) / bind(0));
-        int paray = floor(( y - scope(1, 0) ) / bind(1));
-        int paraz = floor(( z - scope(2, 0) ) / bind(2));
-        int pos = paraz + Nparaz * ( paray + Nparay * parax );
-        geometryPara(i) = pos;
-        Paratogeometry[ pos ][ 0 ] += 1;
-        Paratogeometry[ pos ][ 1 ] += Para_before(geometryPara_before(i));
-    }
-
-    for ( int i = 0; i <= Npara - 1; i++ ) {
-        Para(i) = Paratogeometry[ i ][ 1 ] / Paratogeometry[ i ][ 0 ];
-    }
-    FreeparatoPara = VectorXi::Zero(Npara);
-    for ( int i = 0; i <= Npara - 1; i++ ) {
-        FreeparatoPara(i) = i;
-    }
-
-    Paratogeometry.resize(Para.size( ));
-    for ( int i = 0; i <= N - 1; i++ ) {
-        ( Paratogeometry[ geometryPara(i) ] ).push_back(i);
-    }
-
-}
-
 VectorXi* StructureSpacePara::get_geometryPara( ) {
     return &geometryPara;
 }
@@ -700,10 +620,6 @@ VectorXd* StructureSpacePara::get_Para_filtered( ) {
 
 Vector3i* StructureSpacePara::get_bind( ) {
     return &bind;
-}
-
-VectorXi* StructureSpacePara::get_Free( ) {
-    return &FreeparatoPara;
 }
 
 bool StructureSpacePara::get_Filter( ) {

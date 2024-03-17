@@ -128,14 +128,8 @@ void task() {
                          cout << total_space(i) << endl;
                      } */
 
-                    //Structure s(&inputGeo);
-                    //Space S(Nx, Ny, Nz, N, &s);
-
-                    //StructureAndSpace s(&inputGeo, Nx, Ny, Nz, N);
 
                     d = stod(reader2.Get("Grid", "d", "UNKNOWN"));
-                    /*l << Nx - 1, Ny - 1, Nz - 1;
-                    Structure s1(S.get_total_space(), l, center);*/
 
                     double lam = reader2.GetInteger("Input field", "lam", -1);
                     Vector3d n_K;
@@ -187,11 +181,6 @@ void task() {
                     ObjReader objReader(reader2);
                     string objName = objReader.GetObjName();
                     vector<double> objPara = objReader.GetObjPara();  //Focal spot position.
-                    // vector<double> objPara = [x, y, z]
-                    //vector<DDAModel> models;
-                    //vector<DDAModel*> modelPtrs;
-                    //modelPtrs.push_back(&TestModel);
-
 
                     // CHANGING THIS TO TRUE TO SEE WHAT HAPPENS!!! IT WAS ORIGINALLY FALSE!!
                     bool HavePathRecord = false;
@@ -226,12 +215,6 @@ void task() {
 
 
     }
-    else {
-
-    }
-
-
-
 }
 
 int main() {
