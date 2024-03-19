@@ -22,8 +22,6 @@ private:
     VectorXd Para;                    // THESE ARE THE INPUTDIELS !!! P dimension. P=number of parameters. Same as Para_origin if Filter=False. Filtered and biased para if Filter=True.
     VectorXd Para_origin;             //Un-filtered, unbiased para. No use when Filter=False.
     VectorXd Para_filtered;           //Filtered but unbiased para. No use when Filter=False.
-    MatrixXi scope;                   //[[xmin, xmax],[ymin, ymax],[zmin, zmax]]
-    Vector3i bind;
     bool Filter;                      //True for with Filter. False for without Filter. Defualt as False for most initilizations.
     FilterOption* Filterstats;        //Only used when Filter=True
     vector<vector<WeightPara>> FreeWeight;
@@ -38,7 +36,7 @@ private:
 
 public:
     StructureSpacePara(Vector3i bind_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_);
-
+    void assignFreeWeightsForFilter( );
     void ChangeFilter( );
     VectorXi* get_geometryPara( );
     VectorXd* get_Para( );

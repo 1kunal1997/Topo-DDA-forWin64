@@ -251,6 +251,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         VectorXcd Adevxp;
         VectorXcd devp;
         tie(devx, Adevxp) = this->devx_and_Adevxp_stateless(epsilon_partial, objfunc, originalObjValue, Para, Paratogeometry);
+        //tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, Model, objfunc, originalObjValue);
         cout << "done with devx and adevxp, starting with devp" << endl;
         devp = this->devp(epsilon_partial, Model, objfunc, originalObjValue);
         cout << "done with devp, changing E using devp" << endl;
@@ -306,7 +307,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         }
 
         const double coeff_min = 0.0;
-        const double coeff_max = 0.5;
+        const double coeff_max = 0.0;
 
         if (iteration > 0) {
 
@@ -519,10 +520,10 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
     return make_tuple(devx, Adevxp);
 }
 
-/*tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin) {
+tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin) {
     
     int N = (*CurrentModel).get_N();
-    SpacePara* spacepara = (*CurrentModel).get_spacepara();
+    StructureSpacePara* spacepara = (*CurrentModel).get_structurespacepara();
     VectorXd* Para = (*spacepara).get_Para();           // the values (0-1) of the free parameters ONLY (one quadrant, 2D)
     vector<vector<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
 
@@ -586,7 +587,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
     }
 
     return make_tuple(devx, Adevxp);
-} */
+}
 
 VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin){
     //move origin=Obj0->GetVal() outside because it is the same for one partial derivative of the entire structure
