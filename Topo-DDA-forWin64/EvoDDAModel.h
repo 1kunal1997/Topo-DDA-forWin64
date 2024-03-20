@@ -54,8 +54,7 @@ public:
     tuple<VectorXd, VectorXcd> devx_and_Adevxp_tmp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin);
     VectorXcd devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin);                       //partial derivative of obj to P. Size of P
 
-    void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
-    void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, VectorXd* V_, VectorXd* S_);
+    void EvoOptimization(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);    void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, VectorXd* V_, VectorXd* S_);
     double CalTheObjForSingleStr(int MAX_ITERATION, double MAX_ERROR, int Name);                    //If you want to calculate the Obj for single DDA structure.
 
     //The Obj choosing function:

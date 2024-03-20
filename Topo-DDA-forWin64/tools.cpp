@@ -797,4 +797,16 @@ double linear_update(const double x, const double x_max, const double y_min, con
     return y_min + (y_max - y_min) * x / x_max;
 }
 
+double calculatePenalty(VectorXd& parameters) {
+    double penalty = 0.0;
+    // double coeff = 10.0;
+    for (int i = 0; i < parameters.size(); i++) {
+        double pixel = parameters(i);
+        penalty += pixel * (1 - pixel);
+    }
+
+    return penalty;
+
+}
+
 

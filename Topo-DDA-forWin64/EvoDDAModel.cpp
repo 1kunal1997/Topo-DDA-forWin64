@@ -389,15 +389,16 @@ VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel*
 }
 
 
-
-void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num){
+void EvoDDAModel::EvoOptimization(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num){
     ofstream convergence;
+    ofstream convergenceWithPenalty;
     ofstream Originiterations;
     ofstream Adjointiterations;
     int TotalOriginIt = 0;
     int TotalAdjointIt = 0;
     
     convergence.open(save_position + "convergence.txt");
+    convergenceWithPenalty.open(save_position + "convergenceWithPenalty.txt");
     Originiterations.open(save_position + "Originiterations.txt");
     Adjointiterations.open(save_position + "Adjointiterations.txt");
     //Parameters for Adam Optimizer.
@@ -420,15 +421,26 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         cout<<"-----------------------------START ORIGINAL PROBLEM---------------------------"<<endl;
 
         double obj;
+        double objWithPenalty;
         VectorXd objarray = VectorXd::Zero(ModelNum);
+        VectorXd objarrayWithPenalty = VectorXd::Zero(ModelNum);
         auto it_allModel = allModel.begin();
         auto it_allObj = allObj.begin();
+        double coeff = penaltyweight;
+        string coeff_type = penaltytype;
+       // double coeff = 0.1;
+        double penalty = 0.0;
 
         auto out_start = high_resolution_clock::now();
         (*CStr).output_to_file(save_position + "CoreStructure\\", iteration + start_num, "simple");
         auto out_end = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(out_end - out_start).count();
         output_time += duration;
+        // for the penalty calculation
+        SpacePara* spaceparams = (*CStr).get_spacepara();
+        VectorXd* Params = (*spaceparams).get_Para();
+
+        cout << "model number is :" << ModelNum << endl;
 
         for (int i = 0; i <= ModelNum - 1; i++) {
             //cout << (*(it_PforOrigin))(0) << endl;
@@ -449,15 +461,25 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             duration = duration_cast<milliseconds>(out_end - out_start).count();
             output_time += duration;
 
-            objarray(i) = (*allObj[i]).GetVal();
+            // penalty = 40*calculatePenalty(*Params);                 // mupltiplying by 40 becaue params is only 121 pixels (xy plane, 4 fold symmetry)
 
+            cout << "about to calculate object function" << endl;
+           // objarrayWithPenalty(i) = (*allObj[i]).GetValWithPenalty(coeff);
+            objarray(i) = (*allObj[i]).GetVal();
+            
+            cout << "object function calculated, which is: " << objarray(i) << endl;
             Originiterations << (*allModel[i]).get_ITERATION() << endl;
             TotalOriginIt += (*allModel[i]).get_ITERATION();
 
         }
-        obj = objarray.sum()/ModelNum;                              //Take average
+
+        // cout << "PENALTY IS: " << 40*penalty << endl;
+
+        obj = objarray.sum() / ModelNum;                       //Take average
+        objWithPenalty = objarrayWithPenalty.sum() / ModelNum;
         convergence << obj << " ";
-        cout << "Obj function at iteration " << iteration << " is " << obj << endl;
+        convergenceWithPenalty << objWithPenalty << " ";
+        cout << "Object function at iteration " << iteration << " is " << obj << endl;
 
         high_resolution_clock::time_point t0 = high_resolution_clock::now();
 
@@ -466,7 +488,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         double epsilon = epsilon_fix;
         
-
+        // CURRENTLY INITIALIZED TO FALSE AND NOT SURE WHY!
         if (HavePathRecord) {
 
             if ((abs(obj - PreviousObj)) / PreviousObj <= 0.0001 || epsilon <= 0.0001) {
@@ -479,9 +501,9 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
             cout << "CutoffHold" << CutoffHold << endl;
             PreviousObj = obj;
-            if (CutoffHold >= 3) {
-                cout << "Three times with small change in obj, break the iterations" << endl;
-                //break;
+            if (CutoffHold >= 5) {
+                cout << "Five times with small change in obj, break the iterations" << endl;
+                break;
             }
 
             if (obj < MaxObj) {
@@ -562,6 +584,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         }
         */
         convergence << "\n";
+        convergenceWithPenalty << "\n";
 
         
         
@@ -574,25 +597,32 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         int n_para = (*Free).size();
         int N = (*CStr).get_N();
 
+        cout << "n_para_all is: " << n_para_all << endl;
+        cout << "n_para is: " << n_para << endl;
 
+        VectorXd penaltygradients = VectorXd::Zero(n_para);
+        VectorXd objgradients = VectorXd::Zero(n_para);
         VectorXd gradients = VectorXd::Zero(n_para);
 
-        for (int i = 0; i <= ModelNum - 1; i++) {
+        cout << "about to start partial derivative part" << endl;
+        for (int i = 0; i <= ModelNum - 1; i++) { 
             
             //----------------------------------------get partial derivative of current model---------------------------
             high_resolution_clock::time_point t1 = high_resolution_clock::now();
-            //cout << "---------------------------START PARTIAL DERIVATIVE of Model" << i << " ----------------------" << endl;
+            cout << "---------------------------START PARTIAL DERIVATIVE of Model" << i << " ----------------------" << endl;
             VectorXd devx;
             VectorXcd Adevxp;
             VectorXcd devp;
             tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, allModel[i], allObj[i], Originarray(i));
+            cout << "done with devx and adevxp, starting with devp" << endl;
             devp = this->devp(epsilon_partial, allModel[i], allObj[i], Originarray(i));
+            cout << "done with devp, changing E using devp" << endl;
             high_resolution_clock::time_point t2 = high_resolution_clock::now();
             auto duration = duration_cast<milliseconds>(t2 - t1).count();
-            //cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
+            cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
 
             //------------------------------------Solving adjoint problem-----------------------------------------
-            //cout << "---------------------------START ADJOINT PROBLEM of Model" << i << " ----------------------" << endl;
+            cout << "---------------------------START ADJOINT PROBLEM of Model" << i << " ----------------------" << endl;
             (*allModel[i]).change_E(devp);
 
             (*allModel[i]).InitializeP(PforAdjoint[i]);
@@ -636,8 +666,37 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 complex<double> tmp = mult_result(i);
                 mult_result_real(i) = tmp.real();
             }
-            gradients += devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
+            objgradients += devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
+
+            for (int i = 0; i <= n_para - 1; i++) {
+                penaltygradients(i) = 1 - 2 * (*Para)(i);
+            }
         }
+
+        const double coeff_min = 0.0;
+        const double coeff_max = 0.0;
+
+
+        if (coeff_type == "exp") {
+            coeff = exp_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+        }
+        else if (coeff_type == "piecewise") {
+            coeff = piecewise_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+        }
+        else if (coeff_type == "linear") {
+            coeff = linear_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+        }
+        else {
+            cout << "ERROR: coeff_type not defined" << endl;
+            throw 1;
+            return;
+        }
+        if (coeff != 0) {
+        std:cout << "COEFF IS NOT ZEROOO\n";
+            return;
+        }
+        gradients = objgradients - coeff*penaltygradients;
+        //gradients = objgradients;
 
         //The final gradients for this iteration
         gradients = gradients / ModelNum;
@@ -645,11 +704,10 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         if ((*((*CStr).get_spacepara())).get_Filter() && (iteration >= 1)) {
             //For iteration=0, Para, Para_origin, Para_filtered are all the same. No need for updating gradients.
             //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
+            cout << "-----------ENTERED FILTER IF STATEMENT!!!----------------" << endl;
             gradients = gradients_filtered(gradients, iteration-1, MAX_ITERATION_EVO-1);  
         }
-            
-        
-
+           
 
 
         double epsilon_final=epsilon;
@@ -670,6 +728,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         }
         */
+
+        // HEEYOOO!!!!!
         if(method == "Adam"){
             cout << "Using Adam Optimizer." << endl;
             if(iteration == 0){
@@ -737,15 +797,30 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         
         cout << "abs(gradients.cwiseAbs().mean() after: " << abs(gradients.cwiseAbs().mean()) << endl;
         VectorXd step = epsilon_final * gradients;            //Find the maximum. If -1 find minimum
-        //cout << "epsilon = " << epsilon << endl;
-        //cout << "step = "<< step.mean() << endl;
+
+        cout << "epsilon = " << epsilon << endl;
+        cout << "step = " << step.mean() << endl;
 
         if ((*spacepara).get_Filter()) {
             if ((*((*spacepara).get_Filterstats())).filterchange(iteration)) {
                 (*spacepara).ChangeFilter();
             }
         }
-        
+
+        spaceparams = (*CStr).get_spacepara();
+        Params = (*spaceparams).get_Para();
+
+        penalty = calculatePenalty(*Params);
+
+        cout << "PENALTY AFTER GRADIENTS IS: " << 40*penalty << endl;
+
+       /* if (penalty < 10 && (iteration + 1) % 10 == 0) {
+            for (int i : step) {
+                step[i] = round(step[i]);
+                cout << step[i] << endl;
+            }
+        } */
+
 
         (*CStr).UpdateStr(step, iteration, MAX_ITERATION_EVO - 1);
         for (int i = 0; i <= ModelNum - 1; i++) {
@@ -759,6 +834,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     Adjointiterations << TotalAdjointIt << endl;
 
     convergence.close();
+    convergenceWithPenalty.close();
     Originiterations.close();
     Adjointiterations.close();
 

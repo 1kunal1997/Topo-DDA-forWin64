@@ -368,7 +368,7 @@ void task() {
         bool HaveAdjointHeritage = false;
         double epsilon = reader2.GetInteger("Evo Option", "epsilon", 1);
         EvoDDAModel evoModel(objName, objPara, epsilon, HavePathRecord, HaveOriginHeritage, HaveAdjointHeritage, save_position, &CStr, modelPtrs);
-        evoModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+        //evoModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
         /*TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
         TestModel.update_E_in_structure();
         TestModel.solve_E();
@@ -472,7 +472,7 @@ void task() {
     bool HaveAdjointHeritage = false;
     double epsilon = reader2.GetInteger("Evo Option", "epsilon", 1);
     EvoDDAModel evoModel(objName, objPara, epsilon, HavePathRecord, HaveOriginHeritage, HaveAdjointHeritage, save_position, &CStr, modelPtrs);
-    evoModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+    evoModel.EvoOptimization(0.2, "piecewise", MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
     /*TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
     TestModel.update_E_in_structure();
     TestModel.solve_E();

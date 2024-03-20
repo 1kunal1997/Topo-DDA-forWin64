@@ -42,4 +42,6 @@ double linear_update(const double x, const double x_max, const double y_min, con
 vector<string> splitInputStr(string input, string delimiter);
 pair<VectorXi, VectorXd> getInputStr(string pathCommonData, string pathPara);
 tuple<int, int, int> getInputNs(string pathCommonData);
+
+double calculatePenalty(VectorXd& parameters);
 #endif
