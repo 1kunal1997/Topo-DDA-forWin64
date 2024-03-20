@@ -1087,7 +1087,7 @@ void EvoDDAModel::EvoOptimization(double penaltyweight, string penaltytype, int 
                 coeff = exp_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
             }
             else if (coeff_type == "piecewise") {
-                coeff = piecewise_update_absolute(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+                coeff = piecewise_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
             }
             else if (coeff_type == "linear") {
                 coeff = linear_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);

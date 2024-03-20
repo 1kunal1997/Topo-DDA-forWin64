@@ -156,7 +156,7 @@ void ObjIntegratedEDDAModel::SingleResponse(int idx, bool deduction, bool hasPen
    // debug.open(namedebugfile, std::ios_base::app);
 
     if ((xMin <= (*R)(3 * idx) <= xMax)&&(yMin <= (*R)(3 * idx + 1) <= yMax)&&(zMin <= (*R)(3 * idx + 2) <= zMax)) {
-        // double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
+        //double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
         double factor = 1.0;
         double coeff = 10000.0;
         //double penalty = pow((int(round((*Params)(idx % Params->size()))) - (*Params)(idx % Params->size())), 2);

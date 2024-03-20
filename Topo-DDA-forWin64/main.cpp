@@ -399,7 +399,6 @@ void task() {
         std::vector<double> weightArray = {0.2};
         std::vector<int> projectionArray = { 5, 10, 20, 50 };
         std::vector<string> penaltytypeArray = {"piecewise"};
-        double d;
 
         for (int i = 0; i < epsilonArray.size(); i++) {
             // double epsilon = epsilonArray[i];
@@ -410,7 +409,7 @@ void task() {
                 for (int k = 0; k < penaltytypeArray.size(); k++) {
                     //create directories
 
-                    std::string directoryName = ".\\Binarizedit300_lam540_sym_epsilon_0.1_penaltytype_piecewise_absolute_0.0to0.5\\";
+                    std::string directoryName = "..\\Calculations\\Random Initial Structure\\arandominitialstructuredebug24_it200_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.1_penalty_piecewise0.0to0.5\\";
 
                     //std::string directoryName = ".\\cylinder_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     std::filesystem::create_directories(directoryName);
@@ -438,6 +437,7 @@ void task() {
                     vector<Structure> ln;
                     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
+                    double d;
                     Vector3d center;
                     Vector3d l;
                     d = stod(reader2.Get("Grid", "d", "UNKNOWN"));
@@ -490,7 +490,7 @@ void task() {
                     CoreStructure CStr(&spacepara, d);
                     double nback = sqrt(real(material(0)));
                     cout << "CoreStructure created" << endl;
-                    AProductCore Core(&CStr, lam, material, nback, m, n, Lm * d, Ln * d, "FCD");
+                    AProductCore Core(&CStr, lam, material, nback, m, n, Lm* d, Ln* d, "FCD");
                     cout << "AProductCore created" << endl;
                     DDAModel TestModel(&Core, n_K, E0, n_E0);
                     cout << "TestModel created" << endl;
@@ -507,31 +507,33 @@ void task() {
                     bool HavePathRecord = false;
                     bool HaveOriginHeritage = false;
                     bool HaveAdjointHeritage = false;
-                    double epsilonOld = reader2.GetFloat("Evo Option", "epsilon", 1.0);
-                    cout << "epsilonOld is" << epsilonOld << "\n";
+                    double epsilon = reader2.GetInteger("Evo Option", "epsilon", 1);
+                    //cout << "epsilonOld is" << epsilonOld << "\n";
 
 
 
                     EvoDDAModel evoModel(objName, objPara, epsilonArray[i], HavePathRecord, HaveOriginHeritage, HaveAdjointHeritage, directoryName, &CStr, modelPtrs);
                     evoModel.EvoOptimization(weightArray[j], penaltytypeArray[k], MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam"); // line 393 in EvoDDAModel
+
+                   /* TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+                    TestModel.update_E_in_structure();
+                    TestModel.solve_E();
+
+                    string savePosition = reader2.Get("Output", "saveDir", "UNKNOWN");
+                    TestModel.output_to_file(savePosition + "Model_output\\", 0); */
+
+                    string nameCommonData = save_position + "commondata.txt";
+                    ofstream Common;
+                    Common.open(save_position + "commondata.txt");
+                    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+                    Common << (spacepara.get_geometry()) << endl;
+                    Common << d << endl;
+                    Common << n_E0 << endl;
+                    Common << n_K << endl;
                 }
             }
         }
-        /*TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
-        TestModel.update_E_in_structure();
-        TestModel.solve_E();
-
-        string savePosition = reader2.Get("Output", "saveDir", "UNKNOWN");
-        TestModel.output_to_file(savePosition + "Model_output\\", 0);
-
-        string nameCommonData = save_position + "commondata.txt";
-        ofstream Common;
-        Common.open(save_position + "commondata.txt");
-        Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
-        Common << (spacepara.get_geometry()) << endl;
-        Common << d << endl;
-        Common << n_E0 << endl;
-        Common << n_K << endl; */
+         
         return;
 
 
