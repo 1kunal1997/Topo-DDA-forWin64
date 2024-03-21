@@ -58,8 +58,8 @@ void task() {
     // HEEYOO!!!
     if (tasktype == "EvoOpt 2D input periodic") {
 
-        std::vector<double> epsilonArray = {10};
-        std::vector<double> weightArray = {0.2};
+        std::vector<double> epsilonArray = {0.5};
+        std::vector<double> weightArray = {0};
         std::vector<int> projectionArray = { 5, 10, 20, 50 };
         std::vector<string> penaltytypeArray = {"piecewise"};
         double d;
@@ -75,7 +75,7 @@ void task() {
 
                     //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     //std::string directoryName = "..\\Calculations\\Clipped Random Initial Structure\\" + std::to_string(j) + "ClipRandomness_0.4to0.6_it400_lam542_sym_filterOff_periodicFalse_beta0_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_0.0to0.5\\";
-                    std::string directoryName = "..\\Calculations\\Random Initial Structure\\arandominitialstructuredebug15_it200_lam542_sym_filter2to3_periodicTrue_beta50_epsilon_10_noPenalty\\";
+                    std::string directoryName = "E:\\Calculations\\Random Initial Structure\\periodicitydebug_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
                     cout << "Storing data in : " << directoryName << endl;
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");

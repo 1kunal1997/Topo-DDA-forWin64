@@ -307,28 +307,27 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         }
 
         const double coeff_min = 0.0;
-        const double coeff_max = 0.0;
+        const double coeff_max = 0.5;
 
-        if (iteration > 0) {
 
-            if (coeff_type == "exp") {
-                coeff = exp_update(iteration - 1, 299, coeff_min, coeff_max);
-            }
-            else if (coeff_type == "piecewise") {
-                coeff = piecewise_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
-            }
-            else if (coeff_type == "piecewise absolute") {
-                coeff = piecewise_update_absolute(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
-            }
-            else if (coeff_type == "linear") {
-                coeff = linear_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
-            }
-            else {
-                cout << "ERROR: coeff_type not defined" << endl;
-                throw 1;
-                return;
-            }
+        if (coeff_type == "exp") {
+            coeff = exp_update(iteration - 1, 299, coeff_min, coeff_max);
         }
+        else if (coeff_type == "piecewise") {
+            coeff = piecewise_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+        }
+        else if (coeff_type == "piecewise absolute") {
+            coeff = piecewise_update_absolute(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+        }
+        else if (coeff_type == "linear") {
+            coeff = linear_update(iteration - 1, MAX_ITERATION_EVO - 1, coeff_min, coeff_max);
+        }
+        else {
+            cout << "ERROR: coeff_type not defined" << endl;
+            throw 1;
+            return;
+        }
+
 
         gradients = objgradients - coeff * penaltygradients;
 
