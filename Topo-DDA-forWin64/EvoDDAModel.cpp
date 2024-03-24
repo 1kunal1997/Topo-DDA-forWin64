@@ -29,8 +29,8 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
     PreviousObj = 0.0;
     CutoffHold = 0;
 
-    StructureSpacePara* structurespacepara = (*CStr).get_structurespacepara();
-    VectorXd* Para = (*structurespacepara).get_Para();
+    //StructureSpacePara* structurespacepara = (*CStr).get_structurespacepara();
+    VectorXd* Para = (*CStr).get_Para();
     int n_para = (*Para).size();                     //Total number of parameters
     gradientsquare = VectorXd::Zero(n_para);
 
@@ -229,12 +229,12 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         convergence << "\n";
         convergenceWithPenalty << "\n";
 
-        StructureSpacePara* structurespacepara = (*CStr).get_structurespacepara();
-        VectorXi* geometryPara = (*structurespacepara).get_geometryPara();
-        VectorXd* Para = (*structurespacepara).get_Para();
+        //StructureSpacePara* structurespacepara = (*CStr).get_structurespacepara();
+        VectorXi* geometryPara = (*CStr).get_geometryPara();
+        VectorXd* Para = (*CStr).get_Para();
         int n_para_all = (*Para).size();
         int N = (*CStr).get_N();
-        vector<vector<int>>* Paratogeometry = (*structurespacepara).get_Paratogeometry();
+        vector<vector<int>>* Paratogeometry = (*CStr).get_Paratogeometry();
 
         cout << "n_para_all is: " << n_para_all << endl;
 
@@ -331,7 +331,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 
         gradients = objgradients - coeff * penaltygradients;
 
-        if ((*((*CStr).get_structurespacepara())).get_Filter() && (iteration >= 1)) {
+        if ((*CStr).get_Filter() && (iteration >= 1)) {
             //For iteration=0, Para, Para_origin, Para_filtered are all the same. No need for updating gradients.
             //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
             cout << "-----------ENTERED FILTER IF STATEMENT!!!----------------" << endl;
@@ -413,14 +413,14 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         cout << "epsilon = " << epsilon << endl;
         cout << "step = " << step.mean() << endl;
 
-        if ((*structurespacepara).get_Filter()) {
-            if ((*((*structurespacepara).get_Filterstats())).filterchange(iteration)) {
-                (*structurespacepara).ChangeFilter();
+        if ((*CStr).get_Filter()) {
+            if ((*((*CStr).get_Filterstats())).filterchange(iteration)) {
+                (*CStr).ChangeFilter();
             }
         }
         cout << "right before spaceparams sentence" << endl;
-        StructureSpacePara* structurespaceparams = (*CStr).get_structurespacepara();
-        VectorXd* Params = (*structurespaceparams).get_Para();
+        //StructureSpacePara* structurespaceparams = (*CStr).get_structurespacepara();
+        VectorXd* Params = (*CStr).get_Para();
 
         penalty = calculatePenalty(*Params);
 
@@ -522,9 +522,9 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
 tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin) {
     
     int N = (*CurrentModel).get_N();
-    StructureSpacePara* spacepara = (*CurrentModel).get_structurespacepara();
-    VectorXd* Para = (*spacepara).get_Para();           // the values (0-1) of the free parameters ONLY (one quadrant, 2D)
-    vector<vector<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
+    //StructureSpacePara* spacepara = (*CurrentModel).get_structurespacepara();
+    VectorXd* Para = (*CStr).get_Para();           // the values (0-1) of the free parameters ONLY (one quadrant, 2D)
+    vector<vector<int>>* Paratogeometry = (*CStr).get_Paratogeometry();
 
     VectorXcd* al = (*CurrentModel).get_al();       // members from DDAModel
     VectorXcd* P = (*CurrentModel).get_P();
@@ -708,9 +708,9 @@ double PtoFderivative(const double input, const double beta, const double ita) {
 }
 
 VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int Max_it) {
-    StructureSpacePara* sp = (*CStr).get_structurespacepara();
-    FilterOption* fo = (*sp).get_Filterstats();
-    const VectorXd* Para_filtered = (*sp).get_Para_filtered();
+    //StructureSpacePara* sp = (*CStr).get_structurespacepara();
+    FilterOption* fo = (*CStr).get_Filterstats();
+    const VectorXd* Para_filtered = (*CStr).get_Para_filtered();
     (*fo).update_beta(current_it, Max_it);                     //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
     const double gbeta = (*fo).get_beta();
     const double gita = (*fo).get_ita();
@@ -718,7 +718,7 @@ VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int
 
     int NFpara = gradients.size();
     VectorXd result = VectorXd::Zero(NFpara);
-    const vector<vector<WeightPara>>* FreeWeight = (*sp).get_FreeWeight();
+    const vector<vector<WeightPara>>* FreeWeight = (*CStr).get_FreeWeight();
     if (NFpara != (*FreeWeight).size()) {
         cout << "ERROR: EvoDDAModel::gradients_filtered--NFpara != (*FreeWeight).size()" << endl;
         throw 1;

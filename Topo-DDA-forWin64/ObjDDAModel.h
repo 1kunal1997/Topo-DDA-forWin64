@@ -64,8 +64,9 @@ private:
     VectorXcd* P;
     VectorXi* R;
     DDAModel* model;
-    StructureSpacePara* structurespaceparams;
+    //StructureSpacePara* structurespaceparams;
     //SpacePara* spaceparams;
+    CoreStructure* CStr;
     VectorXd* Params;
     VectorXcd* al;
     double penalty;

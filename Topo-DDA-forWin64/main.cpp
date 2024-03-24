@@ -75,7 +75,7 @@ void task() {
 
                     //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     //std::string directoryName = "..\\Calculations\\Clipped Random Initial Structure\\" + std::to_string(j) + "ClipRandomness_0.4to0.6_it400_lam542_sym_filterOff_periodicFalse_beta0_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_0.0to0.5\\";
-                    std::string directoryName = "E:\\Calculations\\Random Initial Structure\\periodicitydebug_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
+                    std::string directoryName = "E:\\Calculations\\Debugging Suite\\CoreStructureCombineTest_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
                     cout << "Storing data in : " << directoryName << endl;
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");
@@ -169,9 +169,9 @@ void task() {
                     vector<double> symAxis = readSymmetry.getSymAxis();
                     cout << "Periodicity is: " << readTheFilter.getPeriodic() << endl;
                     //StructureSpacePara structurespacepara(bind, &s, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln); // line 1088 in SpacePara
-                    StructureSpacePara structurespacepara(bind, &inputGeo, Nx, Ny, Nz, N, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln);
+                    //StructureSpacePara structurespacepara(bind, &inputGeo, Nx, Ny, Nz, N, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic(), Lm, Ln);
                     cout << "SpacePara created" << endl;
-                    CoreStructure CStr(&structurespacepara, d);
+                    CoreStructure CStr(d, bind, &inputGeo, Nx, Ny, Nz, N, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic( ), Lm, Ln);
                     double nback = sqrt(real(material(0)));
                     cout << "CoreStructure created" << endl;
                     AProductCore Core(&CStr, lam, material, nback, m, n, Lm * d, Ln * d, "FCD");

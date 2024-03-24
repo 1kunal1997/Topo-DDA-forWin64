@@ -156,7 +156,6 @@
     <ClCompile Include="ObjDDAModel.cpp" />
     <ClCompile Include="ObjReader.cpp" />
     <ClCompile Include="SiCi.cpp" />
-    <ClCompile Include="StructureSpacePara.cpp" />
     <ClCompile Include="symReader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="tools.cpp" />
@@ -180,8 +179,6 @@
     <ClInclude Include="ObjDDAModel.h" />
     <ClInclude Include="ObjReader.h" />
     <ClInclude Include="SiCi.h" />
-    <ClInclude Include="Space.h" />
-    <ClInclude Include="StructureSpacePara.h" />
     <ClInclude Include="symReader.h" />
     <ClInclude Include="Tools.h" />
   </ItemGroup>

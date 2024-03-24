@@ -125,8 +125,9 @@ ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, DDAMod
     model = model_;
     //evomodel = evomodel_;
     AProductCore* Core = (*model).get_Core();
-    structurespaceparams = (*model).get_structurespacepara();
-    Params = (*structurespaceparams).get_Para();
+    //structurespaceparams = (*model).get_structurespacepara();
+    CStr = ( *Core ).get_CStr( );
+    Params = (*CStr).get_Para();
     d = (*Core).get_d();
     N = (*Core).get_N();
     Nx = (*Core).get_Nx();
