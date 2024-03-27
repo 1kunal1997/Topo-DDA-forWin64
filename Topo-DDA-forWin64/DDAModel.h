@@ -25,6 +25,18 @@ private:
     VectorXcd P_max;
     VectorXcd al_max;
 
+    int N;
+    int Nx;
+    int Ny;
+    int Nz;
+    double d;
+    VectorXi* R;
+    VectorXd* diel_old;
+    double K;
+    double lam;
+    VectorXcd* material;
+    VectorXd* Para;
+
     //------------------different for different angles------------------
     int time;
     int ITERATION;
@@ -32,7 +44,7 @@ private:
 
 
 public:
-    DDAModel(CoreStructure* CStr_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
+    DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
     DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, bool verbose_=true);
     DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_, bool verbose_ = true);
     ~DDAModel( );
@@ -64,6 +76,14 @@ public:
     //-----------------From AProductCore-----------------------
 
     int get_N();
+    int get_Nx( );
+    int get_Ny( );
+    int get_Nz( );
+    double get_lam( );
+    double get_d();
+    VectorXi* get_R();
+    VectorXd* get_diel_old();
+    VectorXd* get_Para( );
 };
 
 #endif

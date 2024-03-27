@@ -3,6 +3,7 @@
 
 #include "DDAModel.h"
 #include "ObjDDAModel.h"
+#include "CoreStructure.h"
 
 using namespace std;
 using namespace Eigen;

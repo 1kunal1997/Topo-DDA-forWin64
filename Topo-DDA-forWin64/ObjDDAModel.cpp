@@ -32,10 +32,10 @@ ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, DDAModel *model_
     model = model_;
     //evomodel = evomodel_;
     AProductCore* Core = (*model).get_Core();
-    d = (*Core).get_d();
-    N = (*Core).get_N();
-    P = (*model).get_P();
-    R = (*Core).get_R();
+    d = model->get_d();
+    N = model->get_N();
+    P = model->get_P();
+    R = model->get_R();
     Vector3d n_E0 = (*model).get_nE0();
     Vector3d n_K = (*model).get_nK();
     double E0 = (*model).get_E0();
@@ -126,17 +126,20 @@ ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, DDAMod
     //evomodel = evomodel_;
     AProductCore* Core = (*model).get_Core();
     //structurespaceparams = (*model).get_structurespacepara();
-    CStr = ( *Core ).get_CStr( );
-    Params = (*CStr).get_Para();
-    d = (*Core).get_d();
-    N = (*Core).get_N();
-    Nx = (*Core).get_Nx();
-    Ny = (*Core).get_Ny();
-    Nz = (*Core).get_Nz();
-    P = (*model).get_P();
-    R = (*Core).get_R();
+    //CStr = ( *Core ).get_CStr( );
+    Params = model->get_Para();
+    for ( int i = 0; i < Params->size( ); i++ ) {
+        cout << "para at " << i << " is: " << ( *Params )( i ) << endl;
+    }
+    d = model->get_d();
+    N = model->get_N();
+    Nx = model->get_Nx();
+    Ny = model->get_Ny();
+    Nz = model->get_Nz();
+    P = model->get_P();
+    R = model->get_R();
     al = (*model).get_al();
-    diel_old = (*Core).get_diel_old();
+    diel_old = model->get_diel_old();
     Vector3d n_E0 = (*model).get_nE0();
     Vector3d n_K = (*model).get_nK();
     double E0 = (*model).get_E0();

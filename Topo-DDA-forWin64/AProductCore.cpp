@@ -9,7 +9,299 @@
 
 using namespace std::chrono;
 
-AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, string AMatrixMethod_){
+AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_) {
+    MAXm = MAXm_;
+    MAXn = MAXn_;
+    Lm = Lm_;
+    Ln = Ln_;
+    cout << "Calculating periodic sturcture, rep in x direction: " << MAXm << ", rep in y direction: " << MAXn << ". Lx: " << Lm << ", Ly: " << Ln << endl;
+    //CStr = CStr_;
+    material = material_;
+    nback = nback_;
+    lam = lam_;
+    K = 2.0 * M_PI / ( lam / nback );
+    for ( int i = 0; i <= material.size( ) - 1; i++ ) {
+        cout << "origin i: " << i << " " << material(i) << endl;
+        material(i) = material(i) / ( nback * nback );
+        if ( sqrt(norm(material(i))) < 1.01 ) {
+            material(i) = material(i) + 0.01;
+        }
+        cout << "divided i: " << i << " " << material(i) << endl;
+    }
+    AMatrixMethod = AMatrixMethod_;
+    if ( AMatrixMethod == "FCD" ) {
+        SiCiValue = new SiCi( );
+    }
+
+    cout << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;
+    N = N_;
+    int Nx = Nx_;
+    int Ny = Ny_;
+    int Nz = Nz_;
+    d = d_;
+
+    /*
+    for (int i = 0; i <= 3 * N - 1; i++) {
+        diel(i) = material(0) + (*diel_old)(i) * (material(1) - material(0));
+    }
+    */
+
+    //-----------------------------------------------------Allocation and part of initialization for FFT--------------------------------------
+    //NFFT:
+    NxFFT = 2 * Nx - 1;
+    NyFFT = 2 * Ny - 1;
+    NzFFT = 2 * Nz - 1;
+    NFFT = NxFFT * NyFFT * NzFFT;
+
+    //Plan:
+    if ( cufftPlan3d(&Plan, NxFFT, NyFFT, NzFFT, CUFFT_Z2Z) != CUFFT_SUCCESS ) {
+        fprintf(stderr, "CUFFT error: Plan creation failed");
+    }
+
+    high_resolution_clock::time_point t_init = high_resolution_clock::now( );
+    //A_dic:
+    AHos = new double[ 2 * 6 * NFFT ];
+    for ( int i = 0; i <= Nx - 1; i++ ) {
+        for ( int j = 0; j <= Ny - 1; j++ ) {
+            for ( int k = 0; k <= Nz - 1; k++ ) {
+                double x = d * i; double y = d * j; double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+
+                if ( i == 2 && j == 2 && k == 0 ) {
+                    cout << "A: " << Atmp(0, 0) << "," << Atmp(0, 1) << "," << Atmp(0, 2) << endl;
+                }
+
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+    for ( int i = Nx; i <= 2 * Nx - 2; i++ ) {
+        for ( int j = 0; j <= Ny - 1; j++ ) {
+            for ( int k = 0; k <= Nz - 1; k++ ) {
+                double x = d * ( i - ( 2 * Nx - 1 ) ); double y = d * j; double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+    for ( int i = 0; i <= Nx - 1; i++ ) {
+        for ( int j = Ny; j <= 2 * Ny - 2; j++ ) {
+            for ( int k = 0; k <= Nz - 1; k++ ) {
+                double x = d * i; double y = d * ( j - ( 2 * Ny - 1 ) ); double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+    for ( int i = 0; i <= Nx - 1; i++ ) {
+        for ( int j = 0; j <= Ny - 1; j++ ) {
+            for ( int k = Nz; k <= 2 * Nz - 2; k++ ) {
+                double x = d * i; double y = d * j; double z = d * ( k - ( 2 * Nz - 1 ) );
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+    for ( int i = Nx; i <= 2 * Nx - 2; i++ ) {
+        for ( int j = Ny; j <= 2 * Ny - 2; j++ ) {
+            for ( int k = 0; k <= Nz - 1; k++ ) {
+                double x = d * ( i - ( 2 * Nx - 1 ) ); double y = d * ( j - ( 2 * Ny - 1 ) ); double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+    for ( int i = Nx; i <= 2 * Nx - 2; i++ ) {
+        for ( int j = 0; j <= Ny - 1; j++ ) {
+            for ( int k = Nz; k <= 2 * Nz - 2; k++ ) {
+                double x = d * ( i - ( 2 * Nx - 1 ) ); double y = d * j; double z = d * ( k - ( 2 * Nz - 1 ) );
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+    for ( int i = 0; i <= Nx - 1; i++ ) {
+        for ( int j = Ny; j <= 2 * Ny - 2; j++ ) {
+            for ( int k = Nz; k <= 2 * Nz - 2; k++ ) {
+                double x = d * i; double y = d * ( j - ( 2 * Ny - 1 ) ); double z = d * ( k - ( 2 * Nz - 1 ) );
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+    for ( int i = Nx; i <= 2 * Nx - 2; i++ ) {
+        for ( int j = Ny; j <= 2 * Ny - 2; j++ ) {
+            for ( int k = Nz; k <= 2 * Nz - 2; k++ ) {
+                double x = d * ( i - ( 2 * Nx - 1 ) ); double y = d * ( j - ( 2 * Ny - 1 ) ); double z = d * ( k - ( 2 * Nz - 1 ) );
+                Matrix3cd Atmp = Matrix3cd::Zero( );
+                for ( int m = -MAXm; m <= MAXm; m++ ) {
+                    for ( int n = -MAXn; n <= MAXn; n++ ) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[ 6 ] = { 0, 0, 0, 1, 1, 2 };
+                int second[ 6 ] = { 0, 1, 2, 1, 2, 2 };
+                for ( int l = 0; l <= 5; l++ ) {
+                    int index_real = 0 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    int index_imag = 1 + 2 * l + 12 * ( k + NzFFT * j + NzFFT * NyFFT * i );
+                    AHos[ index_real ] = Atmp(first[ l ], second[ l ]).real( );
+                    AHos[ index_imag ] = Atmp(first[ l ], second[ l ]).imag( );
+
+                }
+            }
+        }
+    }
+
+    cudaMalloc(( void** ) &ADev, sizeof(double) * 2 * 6 * NFFT);
+    cudaMemcpy(ADev, AHos, sizeof(double) * 2 * 6 * NFFT, cudaMemcpyHostToDevice);
+    cudaMalloc(( void** ) &A00, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &A01, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &A02, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &A11, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &A12, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &A22, sizeof(cufftDoubleComplex) * NFFT);
+    A2As(ADev, A00, A01, A02, A11, A12, A22, NxFFT, NyFFT, NzFFT);
+    high_resolution_clock::time_point t_init_end = high_resolution_clock::now( );
+    auto duration = duration_cast< milliseconds >( t_init_end - t_init ).count( );
+    cout << "Cost " << duration << "ms to build and allocate A from host to device" << endl;
+
+    //FFT of As:
+    if ( cufftExecZ2Z(Plan, A00, A00, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    cout << "A00 done" << endl;
+    if ( cufftExecZ2Z(Plan, A01, A01, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    cout << "A01 done" << endl;
+    if ( cufftExecZ2Z(Plan, A02, A02, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    cout << "A02 done" << endl;
+    if ( cufftExecZ2Z(Plan, A11, A11, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    cout << "A11 done" << endl;
+    if ( cufftExecZ2Z(Plan, A12, A12, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    cout << "A12 done" << endl;
+    if ( cufftExecZ2Z(Plan, A22, A22, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    cout << "A22 done" << endl;
+
+
+
+    //b:
+    bHos = new double[ 2 * 3 * NFFT ];
+    cudaMalloc(( void** ) &bDev, sizeof(double) * 2 * 3 * NFFT);
+    cudaMalloc(( void** ) &bxDev, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &byDev, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &bzDev, sizeof(cufftDoubleComplex) * NFFT);
+
+
+
+    //Conv:
+    cudaMalloc(( void** ) &Convx, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &Convy, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc(( void** ) &Convz, sizeof(cufftDoubleComplex) * NFFT);
+
+
+}
+
+/*AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, string AMatrixMethod_) {
     
     CStr = CStr_;
     lam = lam_;
@@ -246,10 +538,10 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material
     cudaMalloc((void**)&Convz, sizeof(cufftDoubleComplex)*NFFT);
     
     
-}
+} */
 
 // HEEYO! just loading things on the cuda device
-AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_) {
+/*AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_) {
     MAXm = MAXm_;
     MAXn = MAXn_;
     Lm = Lm_;
@@ -278,14 +570,12 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material
     int Nx = (*CStr).get_Nx();
     int Ny = (*CStr).get_Ny();
     int Nz = (*CStr).get_Nz();
-    VectorXd* diel_old = (*CStr).get_diel_old();
     double d = (*CStr).get_d();
 
-    /*
-    for (int i = 0; i <= 3 * N - 1; i++) {
-        diel(i) = material(0) + (*diel_old)(i) * (material(1) - material(0));
-    }
-    */
+    //for (int i = 0; i <= 3 * N - 1; i++) {
+    //    diel(i) = material(0) + (*diel_old)(i) * (material(1) - material(0));
+    //}
+    
 
     //-----------------------------------------------------Allocation and part of initialization for FFT--------------------------------------
     //NFFT:
@@ -540,7 +830,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material
     cudaMalloc((void**)&Convz, sizeof(cufftDoubleComplex) * NFFT);
 
 
-}
+} */
 
 AProductCore::~AProductCore(){
         delete [] AHos;
@@ -630,7 +920,7 @@ Matrix3cd AProductCore::LDR_inter(double x, double y, double z) {
 }
 
 Matrix3cd AProductCore::FCD_inter(double x, double y, double z) {
-    double d = (*CStr).get_d();
+    //double d = (*CStr).get_d();
     
     Matrix3cd result(3, 3);
     double xsquare = x * x; double ysquare = y * y; double zsquare = z * z;
@@ -702,10 +992,10 @@ Matrix3cd AProductCore::FCD_inter(double x, double y, double z) {
 }
 
 // THIS IS CALLED!!!!
-VectorXcd AProductCore::Aproduct(VectorXcd &b){
+VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     //! in geometry use np.meshgrid with 'ij'  
-    VectorXi* R = (*CStr).get_R();
-    int N = (*CStr).get_N();
+    //VectorXi* R = (*CStr).get_R();
+    //int N = (*CStr).get_N();
 
     for(int i=0; i<=2*3*NFFT-1; i++){
         bHos[i] = 0.0;
@@ -852,7 +1142,7 @@ void AProductCore::UpdateStr(VectorXd step) {
 }
 */
 
-CoreStructure* AProductCore::get_CStr() {
+/*CoreStructure* AProductCore::get_CStr() {
     return CStr;
 }
 int AProductCore::get_N() {
@@ -872,21 +1162,23 @@ VectorXi* AProductCore::get_R() {
 }
 double AProductCore::get_d() {
     return (*CStr).get_d();
+} 
+VectorXd* AProductCore::get_diel_old() {
+    return (*CStr).get_diel_old();
 }
+VectorXd* AProductCore::get_diel_old_max() {
+    return (*CStr).get_diel_old_max();
+}*/
+
 double AProductCore::get_lam() {
     return lam;
 }
 double AProductCore::get_K() {
     return K;
 }
-VectorXd* AProductCore::get_diel_old() {
-    return (*CStr).get_diel_old();
-}
+
 VectorXcd* AProductCore::get_material() {
     return &material;
-}
-VectorXd* AProductCore::get_diel_old_max() {
-    return (*CStr).get_diel_old_max();
 }
 
 double AProductCore::get_Lm() {

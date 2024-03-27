@@ -5,16 +5,25 @@
 #include <cuda.h>
 #include "cufft.h"
 
-#include "CoreStructure.h"
+#include <list>
+#include <vector>
+#include "Eigen/Core"
+
+//#include "CoreStructure.h"
 #include "Kernel.h"
 #include "SiCi.h"
+
+using namespace std;
+using namespace Eigen;
 
 class AProductCore {
 private:
     //---------------------------------Necessary values for A matrix-----------------------------------------------------
-    CoreStructure* CStr;
+    //CoreStructure* CStr;
     double K;
     double lam;
+    double d;
+    int N;
 
     //FFT related variables;
     double* AHos;                              //A_dicDoubl
@@ -48,34 +57,35 @@ private:
     SiCi* SiCiValue;
 
 public:
-    AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, string AMatrixMethod_);
-    AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_);
+    AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_);
+    //AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, string AMatrixMethod_);
+    //AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_);
     ~AProductCore();
     Matrix3cd A_dic_generator(double x, double y, double z);
     Matrix3cd A_dic_generator(double x, double y, double z, int m, int n);
-    VectorXcd Aproduct(VectorXcd& b);                                          //without al*b because al is in DDAModel and can be diff for the same AMatrix
+    VectorXcd Aproduct(VectorXcd& b, VectorXi* R);                                          //without al*b because al is in DDAModel and can be diff for the same AMatrix
     //void UpdateStr(VectorXd step);                                      //alpha not updated because in DDAModel, do not forget!
     //void output_to_file();
     //void output_to_file(string save_position, int iteration);
 
-    CoreStructure* get_CStr();
-    int get_N();
-    int get_Nx();
-    int get_Ny();
-    int get_Nz();
+    //CoreStructure* get_CStr();
+    //int get_N();
+    //int get_Nx();
+    //int get_Ny();
+    //int get_Nz();
     double get_Lm();
     double get_Ln();
     tuple<list<int>, list<int>, list<int>, list<int>> get_para_info();
-    VectorXi* get_R();
-    double get_d();
+    //VectorXi* get_R();
+    //double get_d();
     double get_lam();
     double get_K();
     //VectorXcd* get_diel();        
-    VectorXd* get_diel_old();
+    //VectorXd* get_diel_old();
     VectorXcd* get_material();
     double get_nback();
     //VectorXcd* get_diel_max();                        
-    VectorXd* get_diel_old_max();
+    //VectorXd* get_diel_old_max();
     Matrix3cd FCD_inter(double x, double y, double z);
     Matrix3cd LDR_inter(double x, double y, double z);
 };
