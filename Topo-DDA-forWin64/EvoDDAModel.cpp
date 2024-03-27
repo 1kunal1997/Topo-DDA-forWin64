@@ -24,6 +24,9 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
     CStr = CStr_;
     Model = Model_;
 
+    double lam = (Model->get_Core( ))->get_lam( );
+    cout << "lam inside of EvoDDAModel constructor is: " << lam << endl;
+
     MaxObjarray = VectorXd::Zero(ModelNum);
     Originarray = VectorXd::Zero(ModelNum);
     PreviousObj = 0.0;
@@ -300,7 +303,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
             complex<double> tmp = mult_result(i);
             mult_result_real(i) = tmp.real();
         }
-        objgradients += devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
+        objgradients = devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
 
         for (int i = 0; i <= n_para_all - 1; i++) {
             penaltygradients(i) = 1 - 2 * (*Para)(i);

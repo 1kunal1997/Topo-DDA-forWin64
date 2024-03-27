@@ -46,7 +46,7 @@ private:
 
 public:
     //CoreStructure(StructureSpacePara* structurespacepara_, double d_);
-    CoreStructure(double d_, Vector3i bind_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_);
+    CoreStructure(double d_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_);
     void UpdateStr(VectorXd step, int current_it, int Max_it);
     //void UpdateStrCGD(VectorXd step, int current_it, int Max_it);
     void UpdateStrSingle(int idx, double value);

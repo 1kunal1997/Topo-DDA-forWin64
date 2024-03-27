@@ -51,7 +51,7 @@ namespace {
 
 }  // namespace
 
-CoreStructure::CoreStructure(double d_, Vector3i bind_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_) {
+CoreStructure::CoreStructure(double d_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_) {
     d = d_;
     Filter = Filter_;
     geometry = *geometry_;

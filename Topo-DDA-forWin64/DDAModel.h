@@ -7,6 +7,7 @@ class DDAModel {
 private:
     //------------------------------------Get from AProductCore------------------------------ For the same AMatrix, these are all the same
     AProductCore* Core;
+    //AProductCore OwnCore;
 
     //-----------------------------------Not from AProductCore------------------------------- For the same AMatrix, these can be diff for diff DDAModel
     bool RResultSwitch;               //0(false) for plot only E field on the structure points (fast), 1(true) for using RResult different from R to plot (slow but adjustable).
@@ -31,8 +32,10 @@ private:
 
 
 public:
+    DDAModel(CoreStructure* CStr_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
     DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, bool verbose_=true);
     DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_, bool verbose_ = true);
+    ~DDAModel( );
     void bicgstab(int MAX_ITERATION, double MAX_ERROR);
     void bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION);  //FOR DEBUG ONLY. OUTPUT SOME VALUE AT CERTAIN EVO ITERATION.
     void change_E(VectorXcd E_);
@@ -61,18 +64,6 @@ public:
     //-----------------From AProductCore-----------------------
 
     int get_N();
-    int get_Nx();
-    int get_Ny();
-    int get_Nz();
-    VectorXi* get_R();
-    double get_d();
-    //SpacePara* get_spacepara();
-    //StructureSpacePara* get_structurespacepara( );
-    double get_lam();
-    double get_K();
-    VectorXd* get_diel_old();
-    VectorXcd* get_material();
-    VectorXd* get_diel_old_max();
 };
 
 #endif
