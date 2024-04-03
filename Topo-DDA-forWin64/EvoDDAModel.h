@@ -28,14 +28,8 @@ private:
     VectorXcd PolarizationforAdjointMax;
 
     vector<double> objPara;
-    /*list<double> MajorObjectParameters;
-    list<list<double>> MinorObjectParameters;*/
-
     string objName;
-    /*string MajorObjectFunctionName;
-    double MajorObjectFunctionResult;
-    list<string> MinorObjectFunctionNames;
-    list<double> MinorObjectFunctionResults;*/
+
     vector<ObjDDAModel*> allObj;
     ObjDDAModel* objfunc;
     VectorXd Originarray;                       //Record the Obj function for partial derivative (the value before change)   
@@ -59,8 +53,6 @@ private:
 public:
 
     EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, CoreStructure* CStr_, DDAModel* Model_);
-    EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, CoreStructure* CStr_, vector<DDAModel*> allModel_);
-
    // VectorXd calculateGradient();
 
     //functions used to calculate partial derivatives                                 
@@ -68,11 +60,7 @@ public:
     tuple<VectorXd, VectorXcd> devx_and_Adevxp_stateless(double epsilon, ObjDDAModel* Obj, double origin, VectorXd* para_, vector<vector<int>>* paratogeometry_);
     VectorXcd devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin);                       //partial derivative of obj to P. Size of P
 
-    void EvoOptimization(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
     void EvoOptimizationQuick(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
-    void EvoOptimizationCGD(int Nprojection, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num = 0);
-    void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, VectorXd* V_, VectorXd* S_);
-    double CalTheObjForSingleStr(int MAX_ITERATION, double MAX_ERROR, int Name);                    //If you want to calculate the Obj for single DDA structure.
 
     //The Obj choosing function:
     ObjDDAModel* ObjFactory(string ObjectName, vector<double> ObjectParameters, DDAModel* ObjDDAModel);

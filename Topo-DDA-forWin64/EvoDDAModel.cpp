@@ -32,7 +32,6 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
     PreviousObj = 0.0;
     CutoffHold = 0;
 
-    //StructureSpacePara* structurespacepara = (*CStr).get_structurespacepara();
     VectorXd* Para = (*CStr).get_Para();
     int n_para = (*Para).size();                     //Total number of parameters
     gradientsquare = VectorXd::Zero(n_para);
@@ -50,7 +49,6 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
     //allObj.push_back(obj);
 
 }
-
 
 void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype, int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num) {
     ofstream convergence;
@@ -217,22 +215,9 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 
         originalObjValue = obj;
 
-
-
-        /*
-        if((*ObjectFunctionNames).size()>1){
-            list<double> obj_minor =  this->MinorObj();
-            list<double>::iterator it_obj_minor = obj_minor.begin();
-            for(int i=0; i<=obj_minor.size()-1; i++){
-                convergence << *it_obj_minor << " ";
-                it_obj_minor++;
-            }
-        }
-        */
         convergence << "\n";
         convergenceWithPenalty << "\n";
 
-        //StructureSpacePara* structurespacepara = (*CStr).get_structurespacepara();
         VectorXi* geometryPara = (*CStr).get_geometryPara();
         VectorXd* Para = (*CStr).get_Para();
         int n_para_all = (*Para).size();
@@ -422,23 +407,11 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
             }
         }
         cout << "right before spaceparams sentence" << endl;
-        //StructureSpacePara* structurespaceparams = (*CStr).get_structurespacepara();
         VectorXd* Params = (*CStr).get_Para();
-
         penalty = calculatePenalty(*Params);
-
         cout << "PENALTY AFTER GRADIENTS IS: " << 40 * penalty << endl;
 
-        /* if (penalty < 10 && (iteration + 1) % 10 == 0) {
-             for (int i : step) {
-                 step[i] = round(step[i]);
-                 cout << step[i] << endl;
-             }
-         } */
-
-
         (*CStr).UpdateStr(step, iteration, MAX_ITERATION_EVO - 1);
-
         (*Model).UpdateAlpha();                  //Dont forget this, otherwise bicgstab wont change
 
     }
@@ -522,75 +495,6 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
     return make_tuple(devx, Adevxp);
 }
 
-tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin) {
-    
-    int N = (*CurrentModel).get_N();
-    //StructureSpacePara* spacepara = (*CurrentModel).get_structurespacepara();
-    VectorXd* Para = (*CStr).get_Para();           // the values (0-1) of the free parameters ONLY (one quadrant, 2D)
-    vector<vector<int>>* Paratogeometry = (*CStr).get_Paratogeometry();
-
-    VectorXcd* al = (*CurrentModel).get_al();       // members from DDAModel
-    VectorXcd* P = (*CurrentModel).get_P();
-
-    int n_para_all = (*Para).size();
-    VectorXcd Adevxp = VectorXcd::Zero(3 * N);
-    VectorXd devx = VectorXd::Zero(n_para_all);
-
-    cout << "n_para_all is: " << n_para_all << endl;
-
-    for (int i = 0; i < n_para_all; i++) {
-        int FreeParaPos = i;
-        if (FreeParaPos != i) {
-            cout << "----------------------------ERROR IN FREEPARAPOS!!--------------------------" << endl;
-        }
-        double diel_old_origin = (*Para)(FreeParaPos);
-        double diel_old_tmp = diel_old_origin;
-        int sign = 0;
-        if (diel_old_origin >= epsilon) {
-            sign = -1;
-        }
-        else {
-            sign = 1;
-        }
-        diel_old_tmp += sign * epsilon;
-
-        vector<int>::iterator it = (*Paratogeometry)[FreeParaPos].begin();
-        for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
-            //cout << (*it) << endl;
-            int position = *it;
-            complex<double> alphaorigin = (*al)(3 * position);
-            if (Obj->Have_Devx) Obj->SingleResponse(position, true);
-            (*CStr).UpdateStrSingle(position, diel_old_tmp);
-            (*CurrentModel).UpdateAlphaSingle(position);
-            if (Obj->Have_Devx) Obj->SingleResponse(position, false);
-            complex<double> change = ((*al)(3 * position) - alphaorigin) / (sign * epsilon);
-            Adevxp(3 * position) = change;
-            Adevxp(3 * position + 1) = change;
-            Adevxp(3 * position + 2) = change;
-
-            it++;
-        }
-
-        devx(i) = (Obj->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
-        it = (*Paratogeometry)[FreeParaPos].begin();
-        for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
-            int position = *it;
-            if (Obj->Have_Devx) Obj->SingleResponse(position, true);
-            (*CStr).UpdateStrSingle(position, diel_old_origin);
-            (*CurrentModel).UpdateAlphaSingle(position);
-            if (Obj->Have_Devx) Obj->SingleResponse(position, false);
-            it++;
-        }
-
-    }
-    
-    for (int i = 0; i <= 3 * N - 1; i++) {
-        Adevxp(i) = Adevxp(i) * ((*P)(i));
-    }
-
-    return make_tuple(devx, Adevxp);
-}
-
 VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin){
     //move origin=Obj0->GetVal() outside because it is the same for one partial derivative of the entire structure
     VectorXcd* P = (*CurrentModel).get_P();
@@ -629,12 +533,6 @@ VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel*
     return result;
 }
 
-
-// for constrained gradient descent
-
-
-// HEEYO !!
-
 ObjDDAModel* EvoDDAModel::ObjFactory(string ObjectName, vector<double> ObjectParameters, DDAModel* ObjDDAModel){
     /*if (HavePenalty) {
         cout << "Using L1 Penalty with Penalty Factor " << PenaltyFactor << endl;
@@ -642,41 +540,11 @@ ObjDDAModel* EvoDDAModel::ObjFactory(string ObjectName, vector<double> ObjectPar
     if (objName == "PointE"){
         return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
     }
-    //if (MajorObjectFunctionName == "PointEList") {
-    //    return new ObjPointListEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "PointI") {
-    //    return new ObjPointIDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
+
     if (objName == "IntegratedE") {
         return new ObjIntegratedEDDAModel(ObjectParameters, ObjDDAModel);
     }
-    //if (MajorObjectFunctionName == "MidAvgE") {
-    //    return new ObjMidAvgEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "scattering0D") {
-    //    return new Objscattering0D(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "scattering2D") {
-    //    return new Objscattering2D(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "Abs") {
-    //    return new ObjAbs(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "AbsPartial") {
-    //    return new ObjAbsPartial(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "AbsPartialzslice") {
-    //    return new ObjAbsPartialzslice(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "IntegratedEPartial") {
-    //    return new ObjIntegrateEPartial(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-    //if (MajorObjectFunctionName == "Absbyfar") {
-    //    return new ObjAbsbyfar(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    //}
-
-    // NOT FINALIZED. SHOULD RAISE AN EXCEPTION HERE.
+  
     cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
     return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
 }
@@ -711,7 +579,7 @@ double PtoFderivative(const double input, const double beta, const double ita) {
 }
 
 VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int Max_it) {
-    //StructureSpacePara* sp = (*CStr).get_structurespacepara();
+
     FilterOption* fo = (*CStr).get_Filterstats();
     const VectorXd* Para_filtered = (*CStr).get_Para_filtered();
     (*fo).update_beta(current_it, Max_it);                     //current_it is actually the it in current evo-1 as the str is updated in iteration-1.

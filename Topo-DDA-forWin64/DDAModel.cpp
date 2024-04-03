@@ -18,11 +18,6 @@ DDAModel::DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, 
     n_K = n_K_;
     n_E0 = n_E0_;
 
-    //cout << "lam" << (*Core).get_lam() << endl;
-
-    //cout << "E0=" << E0 << endl;
-    //cout << "n_K" << endl << n_K << endl;
-    //cout << "n_E0" << endl << n_E0 << endl;
     N = N_;
     Nx = Nx_;
     Ny = Ny_;
@@ -34,7 +29,7 @@ DDAModel::DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, 
     d = d_;
     R = R_;
     diel_old = diel_old_;
-    material = &material_;
+    material = Core->get_material();
     Para = Para_;
 
     RResultSwitch = false;
@@ -69,127 +64,6 @@ DDAModel::DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, 
     verbose = verbose_;
 }
 
-
-// HEEYO!
-/*DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, bool verbose_) {
-    
-    Core = AProductCore_;
-    time=0;
-    ITERATION=0;
-    Error=0.0;
-    E0=E0_;
-    n_K=n_K_;
-    n_E0=n_E0_;
-
-    //cout << "lam" << (*Core).get_lam() << endl;
-
-    //cout << "E0=" << E0 << endl;
-    //cout << "n_K" << endl << n_K << endl;
-    //cout << "n_E0" << endl << n_E0 << endl;
-    int N = (*Core).get_N();
-    int Nx = (*Core).get_Nx();
-    int Ny = (*Core).get_Ny();
-    int Nz = (*Core).get_Nz();
-    double lam = (*Core).get_lam();
-    double nback = (*Core).get_nback();
-    double K = (*Core).get_K();
-    double d = (*Core).get_d();
-    VectorXi* R = (*Core).get_R();
-    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    VectorXcd* material = (*Core).get_material();
-
-    RResultSwitch = false;
-    RResult = *R;
-    
-    P = VectorXcd::Zero(N*3);
-    P_max = P;
-    E = VectorXcd::Zero(N*3);
-    Einternal = VectorXcd::Zero(N*3);
-    EResult = VectorXcd::Zero(N*3);
-    for (int i=0;i<N;i++) {
-        E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-        E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-        E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-    }
-    al = VectorXcd::Zero(N*3);
-    diel = VectorXcd::Zero(N * 3);
-    for (int i = 0; i < N * 3; i++) {
-        int labelfloor = int(floor((*diel_old)(i)));
-        int labelnext = labelfloor + 1;
-        if (labelfloor >= 1) {
-            labelnext = labelfloor;
-        }
-        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i)-double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
-        diel(i) = diel_tmp;
-        al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
-    }  
-
-    //cout << "al" << al(0) << endl;
-
-    al_max = al;
-    verbose = verbose_;
-}*/
-
-/*DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_, bool verbose_) {
-    
-    Core = AProductCore_;
-    time = 0;
-    ITERATION = 0;
-    Error = 0.0;
-    E0 = E0_;
-    n_K = n_K_;
-    n_E0 = n_E0_;
-
-    cout << "E0=" << E0 << endl;
-    cout << "n_K" << n_K << endl;
-    cout << "n_E0" << n_E0 << endl;
-    int N = (*Core).get_N();
-    int Nx = (*Core).get_Nx();
-    int Ny = (*Core).get_Ny();
-    int Nz = (*Core).get_Nz();
-    double lam = (*Core).get_lam();
-    double K = (*Core).get_K();
-    double d = (*Core).get_d();
-    VectorXi* R = (*Core).get_R();
-    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    VectorXcd* material = (*Core).get_material();
-    RResultSwitch = true;
-    RResult = *RResult_;
-    if(RResult.size()%3 != 0){
-    
-        cout<<"RResult does not have a size with 3*integer"<<endl;
-        // This could be changed to throwing an exception.
-    }
-    
-    
-
-    P = VectorXcd::Zero(N*3);
-    P_max = P;
-    E = VectorXcd::Zero(N*3);
-    Einternal = VectorXcd::Zero(N*3);
-    EResult = VectorXcd::Zero(RResult.size());
-    for (int i = 0; i < N; i++) {
-        E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-        E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-        E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-    }
-    al = VectorXcd::Zero(N * 3);
-    diel = VectorXcd::Zero(N * 3);
-    for (int i = 0; i < N * 3; i++) {
-        int labelfloor = int(floor((*diel_old)(i)));
-        int labelnext = labelfloor + 1;
-        if (labelfloor >= 1) {
-            labelnext = labelfloor;
-        }
-        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
-        diel(i) = diel_tmp;
-        al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
-    }
-    al_max = al;
-    verbose = verbose_;
-    
-}*/
-
 DDAModel::~DDAModel( ) {
     delete Core;
     Core = nullptr;
@@ -200,7 +74,6 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
         cout << "--------------Calculation start. Iterative method used: BICGSTAB---------------" << endl;
         cout << endl;
     }
-    //int N = (*Core).get_N();
     
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
 
@@ -221,26 +94,18 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     std::complex<double> beta;
     std::complex<double> eta;
     std::complex<double> zeta;
-    
-    
-    //Always starts with P=0 to avoid strange behaviour
-    //P = VectorXcd::Zero(N * 3);
-
-
 
     VectorXcd Ax0 = Aproductwithalb(P);
     
     r = E-Ax0;
     r0 = r;
     p = r;
+
     VectorXcd Ap0 = Aproductwithalb(p);
-
-
     alpha = r0.dot(r)/r0.dot(Ap0);
     t = r-alpha*Ap0;
+
     VectorXcd At0 = Aproductwithalb(t);
-
-
     zeta = At0.dot(t)/At0.dot(At0);
     u = zeta*Ap0;
     z = zeta*r-alpha*u;
@@ -269,11 +134,6 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
                 time = duration_cast<milliseconds>(t_end - t_start).count();
                 cout << "----------------------------r0dotrl==(0,0), nan is going to occur so stop now------------------------" << endl;
                 cout << "--------------Calculation finished. Duration: " << duration / 1000.0 << "s.-------------------" << endl;
-                //ofstream fout;
-                //fout.open("DDATime.txt", fstream::app);
-                //fout<<N<<" "<<duration/1000.0<<endl;
-                //fout << ITERATION << " " << duration / 1000.0 / ITERATION << endl;
-                //fout.close();
 
                 cout << "              Error: " << Error << endl;
                 cout << "              Iteration: " << ITERATION << endl;
@@ -307,11 +167,6 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
                 auto duration = duration_cast<milliseconds>(t_end-t_start).count();
                 time = duration_cast<milliseconds>(t_end-t_start).count();
                 cout << "--------------Calculation finished. Duration: " << duration/1000.0 << "s.-------------------" << endl;
-                //ofstream fout;
-                //fout.open("DDATime.txt", fstream::app);
-                //fout<<N<<" "<<duration/1000.0<<endl;
-                //fout << ITERATION << " " << duration / 1000.0 / ITERATION << endl;
-                //fout.close();
 
                 cout << "              Error: "<<Error<<endl;
                 cout << "              Iteration: "<<ITERATION<<endl;
@@ -353,50 +208,25 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
     std::complex<double> eta;
     std::complex<double> zeta;
 
-
     //Always starts with P=0 to avoid strange behaviour
     //P = VectorXcd::Zero(N * 3);
 
     ofstream foutnew(".\\p330-lam542-beta8-TiO2-InE-circle-fordebug\\BUGINFO.txt");
 
-    
-
     VectorXcd Ax0 = Aproductwithalb(P);
-
-
-
     r = E - Ax0;
-
-
-
     r0 = r;
     p = r;
     VectorXcd Ap0 = Aproductwithalb(p);
-
-
-
     alpha = r0.dot(r) / r0.dot(Ap0);
-
-
-
     t = r - alpha * Ap0;
     VectorXcd At0 = Aproductwithalb(t);
-
-
-
     zeta = At0.dot(t) / At0.dot(At0);
-
-
-
     u = zeta * Ap0;
     z = zeta * r - alpha * u;
     P = P + alpha * p + z;                                    //this will directly change P in this.
     rl = r;
     r = t - zeta * At0;
-
-    
-
-
 
     VectorXcd Ap = VectorXcd::Zero(N * 3);
     VectorXcd At = VectorXcd::Zero(N * 3);
@@ -408,61 +238,6 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
         }
         beta = (alpha / zeta) * r0.dot(r) / r0.dot(rl);
 
-        /*
-        if ((EVOITERATION == 88) && (it == 4849)) {
-            //cout << "WE FIND 88" << endl;
-            foutnew << "-----------------beta at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << beta << endl;
-
-            //foutnew << "-----------------p at " << "it" + to_string(it) << "---------------" << endl;
-            //foutnew << p << endl;
-
-            //foutnew << "-----------------Ap at " << "it" + to_string(it) << "---------------" << endl;
-            //foutnew << Ap << endl;
-
-            foutnew << "-----------------alpha at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << alpha << endl;
-
-            //foutnew << "-----------------t at " << "it" + to_string(it) << "---------------" << endl;
-            //foutnew << t << endl;
-
-            //foutnew << "-----------------At at " << "it" + to_string(it) << "---------------" << endl;
-            //foutnew << At << endl;
-
-            foutnew << "-----------------zeta at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << zeta << endl;
-
-            foutnew << "-----------------alpha/zeta at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << alpha/zeta << endl;
-
-            foutnew << "-----------------r1 at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << rl << endl;
-
-            foutnew << "-----------------r0 at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << r0 << endl;
-
-            //foutnew << "-----------------u at " << "it" + to_string(it) << "---------------" << endl;
-            //foutnew << u << endl;
-
-            //foutnew << "-----------------z at " << "it" + to_string(it) << "---------------" << endl;
-            //foutnew << z << endl;
-
-            //foutnew << "-----------------P at " << "it" + to_string(it) << "---------------" << endl;
-            //foutnew << P << endl;
-
-            foutnew << "-----------------r at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << r << endl;
-
-            foutnew << "-----------------r0dotr at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << r0.dot(r) << endl;
-
-            foutnew << "-----------------r0dotrl at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << r0.dot(rl) << endl;
-
-            foutnew << "-----------------r0dotr/r0dotrl at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << r0.dot(r) / r0.dot(rl) << endl;
-        }
-        */
         p = r + beta * (p - u);
         Ap = Aproductwithalb(p);
         alpha = r0.dot(r) / r0.dot(Ap);
@@ -475,13 +250,6 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
         P = P + alpha * p + z;
         rl = r;
         r = t - zeta * At;
-        
-
-        //if (verbose && EVOITERATION == 88) {
-        //    //cout << "WE FIND 88" << endl;
-        //    foutnew << "-----------------r at " << "it" + to_string(it) << "---------------" << endl;
-        //    foutnew << r.norm() << endl;
-        //}
 
         if (r.norm() / E.norm() <= MAX_ERROR) {
             Error = r.norm() / E.norm();
@@ -512,8 +280,6 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
     cout << "                ERROR:does not converge in " << MAX_ITERATION << " iterations" << endl;
 
     foutnew.close();
-
-
     return;
 }
 
@@ -522,11 +288,7 @@ void DDAModel::change_E(VectorXcd E_){
 }
 
 void DDAModel::reset_E(){
-    //int N = (*Core).get_N();
-    //double lam = (*Core).get_lam();
-    //double K = (*Core).get_K();
-    //double d = (*Core).get_d();
-    //VectorXi* R = (*Core).get_R();
+
     for (int i=0;i<N;i++) {
         E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
         E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
@@ -536,11 +298,6 @@ void DDAModel::reset_E(){
 
 void DDAModel::UpdateAlpha() { 
 
-    //VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    //VectorXcd* material = (*Core).get_material();
-    //double lam = (*Core).get_lam();
-    //double K = (*Core).get_K();
-    //double d = (*Core).get_d();
     for (int i = 0; i <= (*diel_old).size() - 1; i++) {
         int labelfloor = int(floor((*diel_old)(i)));
         int labelnext = labelfloor + 1;
@@ -555,30 +312,6 @@ void DDAModel::UpdateAlpha() {
 
 void DDAModel::UpdateAlphaSingle(int idx) {
 
-    //VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    //VectorXcd* material = (*Core).get_material();
-    //double lam = (*Core).get_lam();
-    //double K = (*Core).get_K();
-    //double d = (*Core).get_d();
-
-    /*
-    CoreStructure* CStr = (*Core).get_CStr();
-    SpacePara* spacepara = ((*CStr).get_spacepara());
-    vector<list<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
-
-    list<int>::iterator it = (*Paratogeometry)[idx].begin();
-    for (int j = 0; j <= (*Paratogeometry)[idx].size() - 1; j++) {
-        int position = *it;
-        std::complex<double> diel_tmp = (*material)(0) + (*diel_old)(3 * position) * ((*material)(1) - (*material)(0));
-        diel(3*position) = diel_tmp;
-        diel(3 * position + 1) = diel_tmp;
-        diel(3 * position + 2) = diel_tmp;
-        al(3*position) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
-        al(3 * position + 1) = al(3 * position);
-        al(3 * position + 2) = al(3 * position);
-        it++;
-    }
-    */
     int labelfloor = int(floor((*diel_old)(3 * idx)));
     int labelnext = labelfloor + 1;
     if (labelfloor >= 1) {
@@ -596,11 +329,7 @@ void DDAModel::UpdateAlphaSingle(int idx) {
 
 void DDAModel::solve_E(){
     if(RResultSwitch == true){
-        //int N = (*Core).get_N();
-        //double d = (*Core).get_d();
-        //double lam = (*Core).get_lam();
-        //double K = (*Core).get_K();
-        //VectorXi* R = (*Core).get_R();
+
         for (int j = 0;j<int(round(RResult.size()/3));j++){
             double x = d*RResult(3*j);
             double y = d*RResult(3*j+1);
@@ -624,15 +353,13 @@ void DDAModel::solve_E(){
             EResult(3*j+2) = E_ext(2)-sum(2);
         }
     }
-    else{
-        EResult = Einternal;
-    }
 
-    
+    else
+        EResult = Einternal;
+  
 }
 
 void DDAModel::update_E_in_structure(){
-    //int N = (*Core).get_N();
     
     for(int i=0;i<=3*N-1;i++){
         std::complex<double> lorentzfactor = 2.0 + diel(i);
@@ -652,71 +379,31 @@ VectorXcd DDAModel::Aproductwithalb(VectorXcd& b) {
     return (*Core).Aproduct(b, R) + result;
 }
 
-
-/*void DDAModel::output_to_file() {
-    
-    (*((*Core).get_CStr())).output_to_file();
-    ofstream fout("Model_results.txt");
-    for(int i=0;i<=P.size()-1;i++){
-        if(P(i).imag()<0){
-            fout<<P(i).real()<<P(i).imag()<<"j"<<endl;
-        }
-        else{
-            fout<<P(i).real()<<"+"<<P(i).imag()<<"j"<<endl;
-        }
-        
-    }
-    fout<<n_K<<endl;
-    fout<<n_E0<<endl;
-    fout<<EResult.size()<<endl;
-    fout<<RResult<<endl;
-    for(int i=0;i<=EResult.size()-1;i++){
-        if(EResult(i).imag()<0){
-            fout<<EResult(i).real()<<EResult(i).imag()<<"j"<<endl;
-        }
-        else{
-            fout<<EResult(i).real()<<"+"<<EResult(i).imag()<<"j"<<endl;
-        }
-        
-    }
-    fout.close();
-} */
-
 void DDAModel::output_to_file(string save_position, int iteration, int ModelLabel){
     
     string name;
     name = save_position + "Model_results" + to_string(ModelLabel) + "it" + to_string(iteration) + ".txt";
     //name = save_position + "Model_output_verify\\" + "Model_results" + "it" + to_string(iteration) + ".txt";
     ofstream fout(name);
-    /*
-    for (int i = 0; i <= P.size() - 1; i++) {
-        if (P(i).imag() < 0) {
-            fout << P(i).real() << P(i).imag() << "j" << endl;
-        }
-        else {
-            fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
-        }
 
-    }
-    */
     for (int i = 0; i <= EResult.size() - 1; i++) {
+
         if (EResult(i).imag() < 0) {
             fout << EResult(i).real() << EResult(i).imag() << "j" << endl;
         }
         else {
             fout << EResult(i).real() << "+" << EResult(i).imag() << "j" << endl;
         }
-
     }
 
     for (int i = 0; i <= P.size() - 1; i++) {
+
         if (P(i).imag() < 0) {
             fout << P(i).real() << P(i).imag() << "j" << endl;
         }
         else {
             fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
         }
-
     }
 
     fout.close();
@@ -728,37 +415,15 @@ void DDAModel::output_to_file(string save_position, int iteration) {
     name = save_position + "Model_results" + "it" + to_string(iteration) + ".txt";
     //name = save_position + "Model_output_verify\\" + "Model_results" + "it" + to_string(iteration) + ".txt";
     ofstream fout(name);
-    /*
-    for (int i = 0; i <= P.size() - 1; i++) {
-        if (P(i).imag() < 0) {
-            fout << P(i).real() << P(i).imag() << "j" << endl;
-        }
-        else {
-            fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
-        }
-
-    }
-    */
-    /*cout << EResult.size() << endl;*/
     for (int i = 0; i <= EResult.size() - 1; i++) {
+
         if (EResult(i).imag() < 0) {
             fout << EResult(i).real() << EResult(i).imag() << "j" << endl;
         }
         else {
             fout << EResult(i).real() << "+" << EResult(i).imag() << "j" << endl;
         }
-
     }
-    
-    /*for (int i = 0; i <= P.size() - 1; i++) {
-        if (P(i).imag() < 0) {
-            fout << P(i).real() << P(i).imag() << "j" << endl;
-        }
-        else {
-            fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
-        }
-
-    }*/
     
     fout.close();
 }
@@ -767,29 +432,22 @@ void DDAModel::output_to_file(string save_position, int iteration) {
 void DDAModel::InitializeP(VectorXcd& Initializer) {
     P = Initializer;
 }
-
 VectorXcd* DDAModel::get_P() {
     return &P;
 }
-
 Vector3d DDAModel::get_nE0() {
     return n_E0;
 }
-
 Vector3d DDAModel::get_nK() {
     return n_K;
 }
-
 double DDAModel::get_E0() {
     return E0;
 }
-
 VectorXcd* DDAModel::get_Einternal() {
     return &Einternal;
 }
-
 AProductCore* DDAModel::get_Core() {
-    cout << "lam inside get_Core is: " << Core->get_lam( ) << endl;
     return Core;
 }
 
@@ -814,7 +472,6 @@ int DDAModel::get_ITERATION() {
 int DDAModel::get_N() {
     return N;
 }
-
 int DDAModel::get_Nx( ) {
     return Nx;
 }
@@ -827,19 +484,15 @@ int DDAModel::get_Nz( ) {
 double DDAModel::get_lam( ) {
     return lam;
 }
-
 double DDAModel::get_d( ) {
     return d;
 }
-
 VectorXi* DDAModel::get_R( ) {
     return R;
 }
-
 VectorXd* DDAModel::get_diel_old( ) {
     return diel_old;
 }
-
 VectorXd* DDAModel::get_Para( ) {
     return Para;
 }
