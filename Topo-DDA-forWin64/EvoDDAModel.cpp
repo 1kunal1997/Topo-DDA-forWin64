@@ -399,7 +399,8 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 
         if ((*CStr).get_Filter()) {
             if ((*((*CStr).get_Filterstats())).filterchange(iteration)) {
-                (*CStr).ChangeFilter();
+                cout << "ABOUT TO CHANGE THE FILTER!!!" << endl;
+                (*CStr).assignFreeWeightsForFilter();
             }
         }
         cout << "right before spaceparams sentence" << endl;
@@ -581,6 +582,8 @@ VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int
     const vector<vector<WeightPara>>* FreeWeight = (*CStr).get_FreeWeight();
     if (NFpara != (*FreeWeight).size()) {
         cout << "ERROR: EvoDDAModel::gradients_filtered--NFpara != (*FreeWeight).size()" << endl;
+        cout << "NFPara is: " << NFpara << endl;
+        cout << "Freewight size: " << FreeWeight->size( ) << endl;
         throw 1;
     }
     for (int i = 0; i <= NFpara - 1; i++) {

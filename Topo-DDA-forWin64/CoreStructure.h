@@ -1,10 +1,6 @@
 #ifndef TOPO_CORESTRUCTURE_H_
 #define TOPO_CORESTRUCTURE_H_
 
-//#include "Space.h"
-//#include "SpacePara.h"
-//#include "StructureSpacePara.h"
-
 #include <list>
 #include <vector>
 #include "Eigen/Core"
@@ -21,7 +17,7 @@ struct WeightPara {
 class CoreStructure {
 private:
     //---------------------------------Geometries, not related to wavelength-------------------------------
-    //StructureSpacePara* structurespacepara;
+
     double d;
     VectorXi* R;                      //Position of dipoles. Both R and RResult are unitless, so need to time d to get real number.
     VectorXd diel_old;                //The 0~1 version of diel, 3*N
@@ -45,10 +41,9 @@ private:
     int Nx, Ny, Nz, N;
 
 public:
-    //CoreStructure(StructureSpacePara* structurespacepara_, double d_);
+
     CoreStructure(double d_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_);
     void UpdateStr(VectorXd step, int current_it, int Max_it);
-    //void UpdateStrCGD(VectorXd step, int current_it, int Max_it);
     void UpdateStrSingle(int idx, double value);
     void output_to_file();
     void output_to_file(string save_position, int iteration, string mode = "normal");
@@ -59,19 +54,15 @@ public:
     int get_Nz();
     VectorXi* get_R();
     double get_d();
-    //StructureSpacePara* get_structurespacepara( );
     VectorXd* get_diel_old();
     VectorXd* get_diel_old_max();
-    double calculate_Penalty();
 
     // from StructureSpacePara
     void assignFreeWeightsForFilter( );
-    void ChangeFilter( );
     VectorXi* get_geometryPara( );
     VectorXd* get_Para( );
     VectorXd* get_Para_origin( );
     VectorXd* get_Para_filtered( );
-    Vector3i* get_bind( );
     bool get_Filter( );
     FilterOption* get_Filterstats( );
     vector<vector<WeightPara>>* get_FreeWeight( );
