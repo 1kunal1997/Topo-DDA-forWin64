@@ -18,14 +18,14 @@ ObjDDAModel* DDAModel::ObjFactory(string ObjectName, vector<double> ObjectParame
     }*/
 
     if ( objName == "IntegratedE" ) {
-        return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, R, &al);
+        return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, geometry, &al);
     }
 
     cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
-    return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, R, &al);
+    return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, geometry, &al);
 }
 
-DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
+DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* geometry_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
     Core = new AProductCore(Nx_, Ny_, Nz_, N_, d_, lam_, material_, nback_, MAXm_, MAXn_, Lm_ * d_, Ln_ * d_, AMatrixMethod_);
     time = 0;
     ITERATION = 0;
@@ -43,14 +43,14 @@ DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, Ve
     double nback = nback_;
     K = Core->get_K( );
     d = d_;
-    R = R_;
+    geometry = geometry_;
     diel_old = diel_old_;
     material = Core->get_material();
     Para = Para_;
 
     objDDAModel = ObjFactory(objName_, objPara_);
     RResultSwitch = false;
-    RResult = *R;
+    RResult = *geometry;
 
     P = VectorXcd::Zero(N * 3);
     P_max = P;
@@ -58,9 +58,9 @@ DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, Ve
     Einternal = VectorXcd::Zero(N * 3);
     EResult = VectorXcd::Zero(N * 3);
     for ( int i = 0; i < N; i++ ) {
-        E(3 * i) = E0 * n_E0(0) * ( cos(K * d * ( n_K(0) * ( *R )( 3 * i ) + n_K(1) * ( *R )( 3 * i + 1 ) + n_K(2) * ( *R )( 3 * i + 2 ) )) + sin(K * d * ( n_K(0) * ( *R )( 3 * i ) + n_K(1) * ( *R )( 3 * i + 1 ) + n_K(2) * ( *R )( 3 * i + 2 ) )) * 1i );
-        E(3 * i + 1) = E0 * n_E0(1) * ( cos(K * d * ( n_K(0) * ( *R )( 3 * i ) + n_K(1) * ( *R )( 3 * i + 1 ) + n_K(2) * ( *R )( 3 * i + 2 ) )) + sin(K * d * ( n_K(0) * ( *R )( 3 * i ) + n_K(1) * ( *R )( 3 * i + 1 ) + n_K(2) * ( *R )( 3 * i + 2 ) )) * 1i );
-        E(3 * i + 2) = E0 * n_E0(2) * ( cos(K * d * ( n_K(0) * ( *R )( 3 * i ) + n_K(1) * ( *R )( 3 * i + 1 ) + n_K(2) * ( *R )( 3 * i + 2 ) )) + sin(K * d * ( n_K(0) * ( *R )( 3 * i ) + n_K(1) * ( *R )( 3 * i + 1 ) + n_K(2) * ( *R )( 3 * i + 2 ) )) * 1i );
+        E(3 * i) = E0 * n_E0(0) * ( cos(K * d * ( n_K(0) * ( *geometry )( 3 * i ) + n_K(1) * ( *geometry )( 3 * i + 1 ) + n_K(2) * ( *geometry )( 3 * i + 2 ) )) + sin(K * d * ( n_K(0) * ( *geometry )( 3 * i ) + n_K(1) * ( *geometry )( 3 * i + 1 ) + n_K(2) * ( *geometry )( 3 * i + 2 ) )) * 1i );
+        E(3 * i + 1) = E0 * n_E0(1) * ( cos(K * d * ( n_K(0) * ( *geometry )( 3 * i ) + n_K(1) * ( *geometry )( 3 * i + 1 ) + n_K(2) * ( *geometry )( 3 * i + 2 ) )) + sin(K * d * ( n_K(0) * ( *geometry )( 3 * i ) + n_K(1) * ( *geometry )( 3 * i + 1 ) + n_K(2) * ( *geometry )( 3 * i + 2 ) )) * 1i );
+        E(3 * i + 2) = E0 * n_E0(2) * ( cos(K * d * ( n_K(0) * ( *geometry )( 3 * i ) + n_K(1) * ( *geometry )( 3 * i + 1 ) + n_K(2) * ( *geometry )( 3 * i + 2 ) )) + sin(K * d * ( n_K(0) * ( *geometry )( 3 * i ) + n_K(1) * ( *geometry )( 3 * i + 1 ) + n_K(2) * ( *geometry )( 3 * i + 2 ) )) * 1i );
     }
     al = VectorXcd::Zero(N * 3);
     diel = VectorXcd::Zero(N * 3);
@@ -323,9 +323,9 @@ void DDAModel::change_E(VectorXcd E_){
 void DDAModel::reset_E(){
 
     for (int i=0;i<N;i++) {
-        E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-        E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
-        E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
+        E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*geometry)(3 * i) + n_K(1) * (*geometry)(3 * i + 1) + n_K(2) * (*geometry)(3 * i + 2))) + sin(K * d * (n_K(0) * (*geometry)(3 * i) + n_K(1) * (*geometry)(3 * i + 1) + n_K(2) * (*geometry)(3 * i + 2))) * 1i);
+        E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*geometry)(3 * i) + n_K(1) * (*geometry)(3 * i + 1) + n_K(2) * (*geometry)(3 * i + 2))) + sin(K * d * (n_K(0) * (*geometry)(3 * i) + n_K(1) * (*geometry)(3 * i + 1) + n_K(2) * (*geometry)(3 * i + 2))) * 1i);
+        E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*geometry)(3 * i) + n_K(1) * (*geometry)(3 * i + 1) + n_K(2) * (*geometry)(3 * i + 2))) + sin(K * d * (n_K(0) * (*geometry)(3 * i) + n_K(1) * (*geometry)(3 * i + 1) + n_K(2) * (*geometry)(3 * i + 2))) * 1i);
     }
 }
 
@@ -373,9 +373,9 @@ void DDAModel::solve_E(){
             E_ext(1) = E0*n_E0(1)*(cos(K*(n_K(0)*y+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
             E_ext(2) = E0*n_E0(2)*(cos(K*(n_K(0)*z+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
             for (int i=0;i<N;i++){
-                double rx = x - d * (*R)(3 * i);                  //R has no d in it, so needs to time d
-                double ry = y - d * (*R)(3 * i + 1);
-                double rz = z - d * (*R)(3 * i + 2);
+                double rx = x - d * (*geometry)(3 * i);                  //R has no d in it, so needs to time d
+                double ry = y - d * (*geometry)(3 * i + 1);
+                double rz = z - d * (*geometry)(3 * i + 2);
                 Matrix3cd A=(*Core).A_dic_generator(rx,ry,rz);
                 sum(0)+=(A(0,0)*P(3*i)+A(0,1)*P(3*i+1)+A(0,2)*P(3*i+2));
                 sum(1)+=(A(1,0)*P(3*i)+A(1,1)*P(3*i+1)+A(1,2)*P(3*i+2));
@@ -409,7 +409,7 @@ VectorXcd DDAModel::Aproductwithalb(VectorXcd& b) {
     for (int i = 0; i <= al.size() - 1; i++) {
         result(i) = b(i) * al(i);
     }
-    return (*Core).Aproduct(b, R) + result;
+    return (*Core).Aproduct(b, geometry) + result;
 }
 
 void DDAModel::output_to_file(string save_position, int iteration, int ModelLabel){
@@ -520,8 +520,8 @@ double DDAModel::get_lam( ) {
 double DDAModel::get_d( ) {
     return d;
 }
-VectorXi* DDAModel::get_R( ) {
-    return R;
+VectorXi* DDAModel::get_geometry( ) {
+    return geometry;
 }
 VectorXd* DDAModel::get_diel_old( ) {
     return diel_old;

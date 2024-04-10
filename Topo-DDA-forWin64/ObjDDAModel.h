@@ -29,13 +29,13 @@ private:
     double d;
     int N;
     VectorXcd* P;
-    VectorXi* R;
+    VectorXi* geometry;
     //EvoDDAModel* evomodel;
     AProductCore* Core;
     Vector3cd E_sum;
     Vector3cd E_ext;
 public:
-    ObjPointEDDAModel(vector<double> parameters, AProductCore* Core_, double d_, int N_, VectorXcd* P_, VectorXi* R_, double E0_, double K_, Vector3d n_E0_, Vector3d n_K_);
+    ObjPointEDDAModel(vector<double> parameters, AProductCore* Core_, double d_, int N_, VectorXcd* P_, VectorXi* geometry_, double E0_, double K_, Vector3d n_E0_, Vector3d n_K_);
     void SingleResponse(int idx, bool deduction, bool hasPenalty = false);
     void SingleResponseWithoutPenalty(int idx, bool deduction);
     double GroupResponse();
@@ -62,7 +62,7 @@ private:
     double beta;
     VectorXd* diel_old;
     VectorXcd* P;
-    VectorXi* R;
+    VectorXi* geometry;
     VectorXcd* al;
     double penalty;
     double E_int;
@@ -71,7 +71,7 @@ private:
     
     
 public:
-    ObjIntegratedEDDAModel(vector<double> parameters, int N_, VectorXcd* P_, VectorXi* R_, VectorXcd* al_);
+    ObjIntegratedEDDAModel(vector<double> parameters, int N_, VectorXcd* P_, VectorXi* geometry_, VectorXcd* al_);
     void SingleResponse(int idx, bool deduction, bool hasPenalty = true);
     void SingleResponseWithoutPenalty(int idx, bool deduction);
     double GroupResponse();

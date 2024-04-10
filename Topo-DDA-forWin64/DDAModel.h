@@ -32,7 +32,7 @@ private:
     int Ny;
     int Nz;
     double d;
-    VectorXi* R;
+    VectorXi* geometry;
     VectorXd* diel_old;
     double K;
     double lam;
@@ -49,7 +49,7 @@ private:
 
 
 public:
-    DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
+    DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* geometry_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
     ~DDAModel( );
     void bicgstab(int MAX_ITERATION, double MAX_ERROR);
     void bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION);  //FOR DEBUG ONLY. OUTPUT SOME VALUE AT CERTAIN EVO ITERATION.
@@ -89,7 +89,7 @@ public:
     int get_Nz( );
     double get_lam( );
     double get_d();
-    VectorXi* get_R();
+    VectorXi* get_geometry();
     VectorXd* get_diel_old();
     VectorXd* get_Para( );
 };

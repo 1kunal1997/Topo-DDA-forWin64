@@ -19,7 +19,6 @@ private:
     //---------------------------------Geometries, not related to wavelength-------------------------------
 
     double d;
-    VectorXi* R;                      //Position of dipoles. Both R and RResult are unitless, so need to time d to get real number.
     VectorXd diel_old;                //The 0~1 version of diel, 3*N
     VectorXd diel_old_max;
 
@@ -32,7 +31,6 @@ private:
     bool Filter;                      //True for with Filter. False for without Filter. Defualt as False for most initilizations.
     FilterOption* Filterstats;        //Only used when Filter=True
     vector<vector<WeightPara>> FreeWeight;
-    vector<int> ParaDividePos;
     bool Periodic;
     int Lx;
     int Ly;
@@ -45,15 +43,8 @@ public:
     CoreStructure(double d_, VectorXi* geometry_, int Nx_, int Ny_, int Nz_, int N_, VectorXd* Inputdiel, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, int Lx_, int Ly_);
     void UpdateStr(VectorXd step, int current_it, int Max_it);
     void UpdateStrSingle(int idx, double value);
-    void output_to_file();
     void output_to_file(string save_position, int iteration, string mode = "normal");
 
-    int get_N();
-    int get_Nx();
-    int get_Ny();
-    int get_Nz();
-    VectorXi* get_R();
-    double get_d();
     VectorXd* get_diel_old();
     VectorXd* get_diel_old_max();
 
@@ -66,13 +57,7 @@ public:
     bool get_Filter( );
     FilterOption* get_Filterstats( );
     vector<vector<WeightPara>>* get_FreeWeight( );
-    vector<int>* get_ParaDividePos( );
     vector<vector<int>>* get_Paratogeometry( );
-
-    //from StructureAndSpace.h
-    VectorXi* get_geometry( );
-    int get_geometry_size( );
-    tuple<int, int, int, int> get_Ns( );
 
 };
 

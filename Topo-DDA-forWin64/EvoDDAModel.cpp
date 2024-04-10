@@ -36,7 +36,7 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
     int n_para = (*Para).size();                     //Total number of parameters
     gradientsquare = VectorXd::Zero(n_para);
 
-    int N = (*CStr).get_N();
+    int N = Model->get_N();
     VectorXcd Ptmp = VectorXcd::Zero(N * 3);
     PolarizationforOrigin = Ptmp;
     PolarizationforAdjoint = Ptmp;
@@ -217,7 +217,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         VectorXi* geometryPara = (*CStr).get_geometryPara();
         VectorXd* Para = (*CStr).get_Para();
         int n_para_all = (*Para).size();
-        int N = (*CStr).get_N();
+        int N = Model->get_N();
         vector<vector<int>>* Paratogeometry = (*CStr).get_Paratogeometry();
 
         cout << "n_para_all is: " << n_para_all << endl;

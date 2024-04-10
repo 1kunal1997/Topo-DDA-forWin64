@@ -161,8 +161,6 @@ CoreStructure::CoreStructure(double d_, VectorXi* geometry_, int Nx_, int Ny_, i
 
     // original CoreStructure stuff below
 
-    R = &geometry;
-
     //---------------------------------------------------initial diel------------------------------------
     diel_old = VectorXd::Zero(3 * N);
     diel_old_max = diel_old;
@@ -246,16 +244,6 @@ void CoreStructure::UpdateStrSingle(int idx, double value) {
 
 }
 
-void CoreStructure::output_to_file() {
-
-    ofstream fout("CoreStructure.txt");
-    fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
-    fout << R << endl;
-    fout << diel_old << endl;
-    fout << d << endl;
-    fout.close();
-}
-
 void CoreStructure::output_to_file(string save_position, int iteration, string mode) {
 
     if (mode == "normal") {
@@ -263,7 +251,7 @@ void CoreStructure::output_to_file(string save_position, int iteration, string m
         name = save_position + "CoreStructure" + to_string(iteration) + ".txt";
         ofstream fout(name);
         fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
-        fout << R << endl;
+        fout << &geometry << endl;
         fout << diel_old << endl;
         fout << d << endl;
         fout.close();
@@ -455,45 +443,11 @@ vector<vector<WeightPara>>* CoreStructure::get_FreeWeight( ) {
     return &FreeWeight;
 }
 
-vector<int>* CoreStructure::get_ParaDividePos( ) {
-    return &ParaDividePos;
-}
-
 vector<vector<int>>* CoreStructure::get_Paratogeometry( ) {
     return &Paratogeometry;
 }
 
 // from StructureAndSpace.cpp
-
-VectorXi* CoreStructure::get_geometry( ) {
-    return &geometry;
-}
-
-int CoreStructure::get_geometry_size( ) {
-    return round(geometry.size( ) / 3);
-}
-tuple<int, int, int, int> CoreStructure::get_Ns( ) {
-    return make_tuple(Nx, Ny, Nz, N);
-}
-
-int CoreStructure::get_N() {
-    return N;
-}
-int CoreStructure::get_Nx() {
-    return Nx;
-}
-int CoreStructure::get_Ny() {
-    return Ny;
-}
-int CoreStructure::get_Nz() {
-    return Nz;
-}
-VectorXi* CoreStructure::get_R() {
-    return R;
-}
-double CoreStructure::get_d() {
-    return d;
-}
 
 VectorXd* CoreStructure::get_diel_old() {
     return &diel_old;

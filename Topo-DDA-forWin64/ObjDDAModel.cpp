@@ -17,7 +17,7 @@ double SmoothDensity(double input, double ita, double beta) {
     }
 }
 
-ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, AProductCore* Core_, double d_, int N_, VectorXcd* P_, VectorXi* R_, double E0_, double K_, Vector3d n_E0_, Vector3d n_K_) {
+ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, AProductCore* Core_, double d_, int N_, VectorXcd* P_, VectorXi* geometry_, double E0_, double K_, Vector3d n_E0_, Vector3d n_K_) {
     VectorXd PointEParameters = VectorXd::Zero(( parameters ).size( ));
     //auto it=(parameters).begin();
     for ( int i = 0; i <= int(( parameters ).size( ) - 1); i++ ) {
@@ -32,7 +32,7 @@ ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, AProductCore* Co
     d = d_;
     N = N_;
     P = P_;
-    R = R_;
+    geometry = geometry_;
     Vector3d n_E0 = n_E0_;
     Vector3d n_K = n_K_;
     double E0 = E0_;
@@ -48,9 +48,9 @@ ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, AProductCore* Co
 void ObjPointEDDAModel::SingleResponse(int idx, bool deduction, bool hasPenalty){
     //VectorXcd P = model->get_P();
     //VectorXi R = model->get_R();
-    double rx=x-d*(*R)(3*idx);                  //R has no d in it, so needs to time d
-    double ry=y-d*(*R)(3*idx+1);
-    double rz=z-d*(*R)(3*idx+2);
+    double rx=x-d*(*geometry)(3*idx);                  //R has no d in it, so needs to time d
+    double ry=y-d*(*geometry)(3*idx+1);
+    double rz=z-d*(*geometry)(3*idx+2);
     //cout << rx << "," << ry << "," << rz << idx << endl;
     Matrix3cd A=(*Core).A_dic_generator(rx,ry,rz);
     if (deduction == false){
@@ -100,7 +100,7 @@ void ObjPointEDDAModel::Reset(){
 
 
 
-ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, int N_, VectorXcd* P_, VectorXi* R_, VectorXcd* al_) {
+ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, int N_, VectorXcd* P_, VectorXi* geometry_, VectorXcd* al_) {
     VectorXd PointEParameters = VectorXd::Zero(( parameters ).size( ));
     //auto it=(parameters).begin();
     for ( int i = 0; i <= int(( parameters ).size( ) - 1); i++ ) {
@@ -120,7 +120,7 @@ ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, int N_
 
     N = N_;
     P = P_;
-    R = R_;
+    geometry = geometry_;
     al = al_;
     penalty = 0.0;
     E_int = 0.0;
@@ -132,7 +132,7 @@ void ObjIntegratedEDDAModel::SingleResponse(int idx, bool deduction, bool hasPen
    // ofstream debug;
    // debug.open(namedebugfile, std::ios_base::app);
 
-    if ((xMin <= (*R)(3 * idx) <= xMax)&&(yMin <= (*R)(3 * idx + 1) <= yMax)&&(zMin <= (*R)(3 * idx + 2) <= zMax)) {
+    if ((xMin <= (*geometry)(3 * idx) <= xMax)&&(yMin <= (*geometry)(3 * idx + 1) <= yMax)&&(zMin <= (*geometry)(3 * idx + 2) <= zMax)) {
         //double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
         double factor = 1.0;
         double coeff = 10000.0;
@@ -161,7 +161,7 @@ void ObjIntegratedEDDAModel::SingleResponseWithoutPenalty(int idx, bool deductio
     //ofstream debug;
     //debug.open(namedebugfile, std::ios_base::app);
 
-    if ((xMin <= (*R)(3 * idx) <= xMax) && (yMin <= (*R)(3 * idx + 1) <= yMax) && (zMin <= (*R)(3 * idx + 2) <= zMax)) {
+    if ((xMin <= (*geometry)(3 * idx) <= xMax) && (yMin <= (*geometry)(3 * idx + 1) <= yMax) && (zMin <= (*geometry)(3 * idx + 2) <= zMax)) {
         //double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
         double factor = 1;
 
