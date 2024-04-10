@@ -2,11 +2,13 @@
 #define TOPO_DDAMODEL_H_
 
 #include "AProductCore.h"
+#include "ObjDDAModel.h"
 
 class DDAModel {
 private:
     //------------------------------------Get from AProductCore------------------------------ For the same AMatrix, these are all the same
     AProductCore* Core;
+    ObjDDAModel* objDDAModel;
     //AProductCore OwnCore;
 
     //-----------------------------------Not from AProductCore------------------------------- For the same AMatrix, these can be diff for diff DDAModel
@@ -37,6 +39,9 @@ private:
     VectorXcd* material;
     VectorXd* Para;
 
+    vector<double> objPara;
+    string objName;
+
     //------------------different for different angles------------------
     int time;
     int ITERATION;
@@ -44,7 +49,7 @@ private:
 
 
 public:
-    DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
+    DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
     ~DDAModel( );
     void bicgstab(int MAX_ITERATION, double MAX_ERROR);
     void bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION);  //FOR DEBUG ONLY. OUTPUT SOME VALUE AT CERTAIN EVO ITERATION.
@@ -69,6 +74,12 @@ public:
     VectorXcd* get_P_max();
     VectorXcd* get_al_max();
     int get_ITERATION();
+
+    ObjDDAModel* ObjFactory(string ObjectName, vector<double> ObjectParameters);
+    double calculateObjective( );
+    bool get_HaveDevx( );
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse( );
 
     //-----------------From AProductCore-----------------------
 

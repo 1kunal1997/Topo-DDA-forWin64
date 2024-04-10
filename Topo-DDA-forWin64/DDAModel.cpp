@@ -9,7 +9,23 @@
 
 using namespace std::chrono;
 
-DDAModel::DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
+ObjDDAModel* DDAModel::ObjFactory(string ObjectName, vector<double> ObjectParameters) {
+    /*if (HavePenalty) {
+        cout << "Using L1 Penalty with Penalty Factor " << PenaltyFactor << endl;
+    }*/
+    /*if ( objName == "PointE" ) {
+        return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
+    }*/
+
+    if ( objName == "IntegratedE" ) {
+        return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, R, &al);
+    }
+
+    cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
+    return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, R, &al);
+}
+
+DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
     Core = new AProductCore(Nx_, Ny_, Nz_, N_, d_, lam_, material_, nback_, MAXm_, MAXn_, Lm_ * d_, Ln_ * d_, AMatrixMethod_);
     time = 0;
     ITERATION = 0;
@@ -32,6 +48,7 @@ DDAModel::DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, 
     material = Core->get_material();
     Para = Para_;
 
+    objDDAModel = ObjFactory(objName_, objPara_);
     RResultSwitch = false;
     RResult = *R;
 
@@ -67,6 +84,22 @@ DDAModel::DDAModel(VectorXd* Para_, VectorXi* R_, VectorXd* diel_old_, int Nx_, 
 DDAModel::~DDAModel( ) {
     delete Core;
     Core = nullptr;
+}
+
+double DDAModel::calculateObjective( ) {
+    return objDDAModel->GetVal( );
+}
+
+bool DDAModel::get_HaveDevx( ) {
+    return objDDAModel->Have_Devx;
+}
+
+void DDAModel::SingleResponse(int idx, bool deduction) {
+    objDDAModel->SingleResponse(idx, deduction);
+}
+
+double DDAModel::GroupResponse( ) {
+    return objDDAModel->GroupResponse( );
 }
 
 void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){

@@ -45,7 +45,6 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
 
     //-----------------generate obj list----------------------------
     double origin = 0.0;
-    objfunc = ObjFactory(objName, objPara, Model);
     //allObj.push_back(obj);
 
 }
@@ -82,9 +81,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         cout << "-----------------------------START ORIGINAL PROBLEM---------------------------" << endl;
 
         double obj;
-        double objWithPenalty;
-        auto it_allModel = allModel.begin();
-        auto it_allObj = allObj.begin();
+        double objWithPenalty = 0.0;
         double coeff = penaltyweight;
         string coeff_type = penaltytype;
         // double coeff = 0.1;
@@ -116,8 +113,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         // penalty = 40*calculatePenalty(*Params);                 // mupltiplying by 40 becaue params is only 121 pixels (xy plane, 4 fold symmetry)
 
         cout << "about to calculate object function" << endl;
-        objWithPenalty = (*objfunc).GetValWithPenalty(coeff);
-        obj = (*objfunc).GetVal();
+        obj = (*Model).calculateObjective();
 
         convergence << obj << " ";
         convergenceWithPenalty << objWithPenalty << " ";
@@ -238,10 +234,10 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         VectorXd devx;
         VectorXcd Adevxp;
         VectorXcd devp;
-        tie(devx, Adevxp) = this->devx_and_Adevxp_stateless(epsilon_partial, objfunc, originalObjValue, Para, Paratogeometry);
+        tie(devx, Adevxp) = this->devx_and_Adevxp_stateless(epsilon_partial, originalObjValue, Para, Paratogeometry);
         //tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, Model, objfunc, originalObjValue);
         cout << "done with devx and adevxp, starting with devp" << endl;
-        devp = this->devp(epsilon_partial, Model, objfunc, originalObjValue);
+        devp = this->devp(epsilon_partial, Model, originalObjValue);
         cout << "done with devp, changing E using devp" << endl;
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
         duration = duration_cast<milliseconds>(t2 - t1).count();
@@ -427,7 +423,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 
 }
 
-tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon, ObjDDAModel* Obj, double origin, VectorXd* para_, vector<vector<int>>* paratogeometry_) {
+tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon, double origin, VectorXd* para_, vector<vector<int>>* paratogeometry_) {
 
     VectorXd* Para = para_;           // the values (0-1) of the free parameters ONLY (one quadrant, 2D)
     vector<vector<int>>* Paratogeometry = paratogeometry_;
@@ -463,10 +459,14 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
             //cout << (*it) << endl;
             int position = *it;
             complex<double> alphaorigin = (*al)(3 * position);
-            if (Obj->Have_Devx) Obj->SingleResponse(position, true);
+
+            if (Model->get_HaveDevx()) 
+                Model->SingleResponse(position, true);
             (*CStr).UpdateStrSingle(position, diel_old_tmp);
             (*Model).UpdateAlphaSingle(position);
-            if (Obj->Have_Devx) Obj->SingleResponse(position, false);
+
+            if (Model->get_HaveDevx()) 
+                Model->SingleResponse(position, false);
             complex<double> change = ((*al)(3 * position) - alphaorigin) / (sign * epsilon);
             Adevxp(3 * position) = change;
             Adevxp(3 * position + 1) = change;
@@ -475,14 +475,18 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
             it++;
         }
 
-        devx(i) = (Obj->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
+        devx(i) = (Model->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
         it = (*Paratogeometry)[FreeParaPos].begin();
         for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
             int position = *it;
-            if (Obj->Have_Devx) Obj->SingleResponse(position, true);
+            if (Model->get_HaveDevx()) 
+                Model->SingleResponse(position, true);
+
             (*CStr).UpdateStrSingle(position, diel_old_origin);
             (*Model).UpdateAlphaSingle(position);
-            if (Obj->Have_Devx) Obj->SingleResponse(position, false);
+
+            if (Model->get_HaveDevx()) 
+                Model->SingleResponse(position, false);
             it++;
         }
 
@@ -495,22 +499,23 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
     return make_tuple(devx, Adevxp);
 }
 
-VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel* Obj, double origin){
+VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, double origin){
     //move origin=Obj0->GetVal() outside because it is the same for one partial derivative of the entire structure
-    VectorXcd* P = (*CurrentModel).get_P();
-    VectorXcd result=VectorXcd::Zero((*P).size());          // 3N dimension
+    VectorXcd* P = Model->get_P();
+    VectorXcd result=VectorXcd::Zero((*P).size()); // 3N dimension
+
     for(int i=0;i<= (*P).size() -1;i++){
         int position = i/3;
         
-        Obj->SingleResponse(position, true);
+        Model->SingleResponse(position, true);
         
         (*P)(i)= (*P)(i)+epsilon;
         
-        Obj->SingleResponse(position, false);
+        Model->SingleResponse(position, false);
         
-        result(i)+=(Obj->GroupResponse()-origin)/epsilon;
+        result(i)+=(Model->GroupResponse()-origin)/epsilon;
         
-        Obj->SingleResponse(position, true);
+        Model->SingleResponse(position, true);
         
         (*P)(i)= (*P)(i)-epsilon;
         
@@ -518,40 +523,19 @@ VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjDDAModel*
         
         (*P)(i)= (*P)(i)+epsilonimag;
         
-        Obj->SingleResponse(position, false);
+        Model->SingleResponse(position, false);
         
-        complex<double> tmpRes = (Obj->GroupResponse()-origin)/ epsilonimag;
+        complex<double> tmpRes = (Model->GroupResponse()-origin)/ epsilonimag;
         result(i)+=tmpRes;
         
-        Obj->SingleResponse(position, true);
+        Model->SingleResponse(position, true);
         
         (*P)(i)= (*P)(i)- epsilonimag;
         
-        Obj->SingleResponse(position, false);
+        Model->SingleResponse(position, false);
     }
     cout << "Devp_sum: " << result.sum() << endl;
     return result;
-}
-
-ObjDDAModel* EvoDDAModel::ObjFactory(string ObjectName, vector<double> ObjectParameters, DDAModel* ObjDDAModel){
-    /*if (HavePenalty) {
-        cout << "Using L1 Penalty with Penalty Factor " << PenaltyFactor << endl;
-    }*/
-    /*if ( objName == "PointE" ) {
-        return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
-    }*/
-
-    int N = ObjDDAModel->get_N( ); 
-    VectorXcd* P = ObjDDAModel->get_P( ); 
-    VectorXi* R = ObjDDAModel->get_R( ); 
-    VectorXcd* al = ObjDDAModel->get_al( );
-
-    if (objName == "IntegratedE") {
-        return new ObjIntegratedEDDAModel(ObjectParameters, N, P, R, al);
-    }
-  
-    cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
-    return new ObjIntegratedEDDAModel(ObjectParameters, N, P, R, al);
 }
 
 //double EvoDDAModel::L1Norm(){
