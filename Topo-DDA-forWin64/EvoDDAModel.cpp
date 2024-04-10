@@ -537,16 +537,21 @@ ObjDDAModel* EvoDDAModel::ObjFactory(string ObjectName, vector<double> ObjectPar
     /*if (HavePenalty) {
         cout << "Using L1 Penalty with Penalty Factor " << PenaltyFactor << endl;
     }*/
-    if (objName == "PointE"){
+    /*if ( objName == "PointE" ) {
         return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
-    }
+    }*/
+
+    int N = ObjDDAModel->get_N( ); 
+    VectorXcd* P = ObjDDAModel->get_P( ); 
+    VectorXi* R = ObjDDAModel->get_R( ); 
+    VectorXcd* al = ObjDDAModel->get_al( );
 
     if (objName == "IntegratedE") {
-        return new ObjIntegratedEDDAModel(ObjectParameters, ObjDDAModel);
+        return new ObjIntegratedEDDAModel(ObjectParameters, N, P, R, al);
     }
   
     cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
-    return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
+    return new ObjIntegratedEDDAModel(ObjectParameters, N, P, R, al);
 }
 
 //double EvoDDAModel::L1Norm(){

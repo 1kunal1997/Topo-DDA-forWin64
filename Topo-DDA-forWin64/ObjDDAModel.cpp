@@ -17,34 +17,31 @@ double SmoothDensity(double input, double ita, double beta) {
     }
 }
 
-
-ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, DDAModel *model_){
-    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, AProductCore* Core_, double d_, int N_, VectorXcd* P_, VectorXi* R_, double E0_, double K_, Vector3d n_E0_, Vector3d n_K_) {
+    VectorXd PointEParameters = VectorXd::Zero(( parameters ).size( ));
     //auto it=(parameters).begin();
-    for(int i=0;i<=int((parameters).size()-1);i++){
-        PointEParameters(i) = parameters[i];
+    for ( int i = 0; i <= int(( parameters ).size( ) - 1); i++ ) {
+        PointEParameters(i) = parameters[ i ];
     }
     //Have_Penalty = HavePenalty_;
-    x=PointEParameters(0);
-    y=PointEParameters(1);
-    z=PointEParameters(2);
+    x = PointEParameters(0);
+    y = PointEParameters(1);
+    z = PointEParameters(2);
     Have_Devx = false;
-    model = model_;
-    //evomodel = evomodel_;
-    AProductCore* Core = (*model).get_Core();
-    d = model->get_d();
-    N = model->get_N();
-    P = model->get_P();
-    R = model->get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
-    double E0 = (*model).get_E0();
-    double K = (*Core).get_K();
-    E_sum = Vector3cd::Zero();                                                                             //ÊÇ²»ÊÇE_sumÍüÁË¼ÓE_extÁË£¿ It is actually in Rest.
-    E_ext = Vector3cd::Zero();
-    E_ext(0) = E0*n_E0(0)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
-    E_ext(1) = E0*n_E0(1)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
-    E_ext(2) = E0*n_E0(2)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);   
+    Core = Core_;
+    d = d_;
+    N = N_;
+    P = P_;
+    R = R_;
+    Vector3d n_E0 = n_E0_;
+    Vector3d n_K = n_K_;
+    double E0 = E0_;
+    double K = K_;
+    E_sum = Vector3cd::Zero( );                                                                             //ÊÇ²»ÊÇE_sumÍüÁË¼ÓE_extÁË£¿ It is actually in Rest.
+    E_ext = Vector3cd::Zero( );
+    E_ext(0) = E0 * n_E0(0) * ( cos(K * ( n_K(0) * x + n_K(1) * y + n_K(2) * z )) + sin(K * ( n_K(0) * x + n_K(1) * y + n_K(2) * z )) * 1i );
+    E_ext(1) = E0 * n_E0(1) * ( cos(K * ( n_K(0) * x + n_K(1) * y + n_K(2) * z )) + sin(K * ( n_K(0) * x + n_K(1) * y + n_K(2) * z )) * 1i );
+    E_ext(2) = E0 * n_E0(2) * ( cos(K * ( n_K(0) * x + n_K(1) * y + n_K(2) * z )) + sin(K * ( n_K(0) * x + n_K(1) * y + n_K(2) * z )) * 1i );
     // cout << R(3*5444+2) << "this" << endl;
 }
 
@@ -55,7 +52,6 @@ void ObjPointEDDAModel::SingleResponse(int idx, bool deduction, bool hasPenalty)
     double ry=y-d*(*R)(3*idx+1);
     double rz=z-d*(*R)(3*idx+2);
     //cout << rx << "," << ry << "," << rz << idx << endl;
-    AProductCore* Core = (*model).get_Core();
     Matrix3cd A=(*Core).A_dic_generator(rx,ry,rz);
     if (deduction == false){
         E_sum(0)-=(A(0,0)*(*P)(3*idx)+A(0,1)*(*P)(3*idx+1)+A(0,2)*(*P)(3*idx+2));
@@ -103,11 +99,12 @@ void ObjPointEDDAModel::Reset(){
 }
 
 
-ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, DDAModel* model_) {
-    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+
+ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, int N_, VectorXcd* P_, VectorXi* R_, VectorXcd* al_) {
+    VectorXd PointEParameters = VectorXd::Zero(( parameters ).size( ));
     //auto it=(parameters).begin();
-    for (int i = 0; i <= int((parameters).size() - 1); i++) {
-        PointEParameters(i) = parameters[i];
+    for ( int i = 0; i <= int(( parameters ).size( ) - 1); i++ ) {
+        PointEParameters(i) = parameters[ i ];
     }
     //Have_Penalty = HavePenalty_;
     powNum = int(round(PointEParameters(0)));
@@ -120,13 +117,11 @@ ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, DDAMod
     ita = PointEParameters(7);
     beta = PointEParameters(8);
     Have_Devx = true;
-    model = model_;
 
-    Params = model->get_Para();
-    N = model->get_N();
-    P = model->get_P();
-    R = model->get_R();
-    al = (*model).get_al();
+    N = N_;
+    P = P_;
+    R = R_;
+    al = al_;
     penalty = 0.0;
     E_int = 0.0;
     namedebugfile = ".\\Squarecenter_4x4x1_it200_sym_eps0.1_penalty10\\debugfile.txt";
@@ -204,18 +199,7 @@ double ObjIntegratedEDDAModel::GroupResponse() {
 }
 
 double ObjIntegratedEDDAModel::GetValWithPenalty(double coeff) {
-    Reset(); // E_int = 0.0
-    for (int idx = 0; idx < N; idx++) {
-        double pixel = (*Params)(idx % Params->size());
-        penalty += pixel*(1 - pixel);
-        SingleResponse(idx, false);
-        // cout << E_sum(0) << endl;
-    }
-    cout << "N is: " << N << endl;
-    cout << "Penalty inside of ObjDDAModel is: " << penalty << endl;
-    cout << "Params size is: " << Params->size() << endl;
-    cout << "params at index 10: " << (*Params)(10) << endl;
-    return GroupResponseWithPenalty(coeff); // log(E_int)
+    return 0;
 }
 
 double ObjIntegratedEDDAModel::GetVal() {

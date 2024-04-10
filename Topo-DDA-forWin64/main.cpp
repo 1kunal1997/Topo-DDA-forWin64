@@ -18,21 +18,6 @@
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
-
-ObjDDAModel* ObjFactoryOut(string ObjectName, vector<double> ObjectParameters, DDAModel* ObjDDAModel) {
-    /*if (HavePenalty) {
-        cout << "Using L1 Penalty with Penalty Factor " << PenaltyFactor << endl;
-    }*/
-    if (ObjectName == "PointE") {
-        return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
-    }
-    if (ObjectName == "IntegratedE") {
-        return new ObjIntegratedEDDAModel(ObjectParameters, ObjDDAModel);
-    }
-    cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
-    return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
-}
-
 void task() {
     INIReader reader1("task.ini");
 
@@ -76,7 +61,7 @@ void task() {
 
                     //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     //std::string directoryName = "..\\Calculations\\Clipped Random Initial Structure\\" + std::to_string(j) + "ClipRandomness_0.4to0.6_it400_lam542_sym_filterOff_periodicFalse_beta0_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_0.0to0.5\\";
-                    std::string directoryName = "E:\\Calculations\\Debugging Suite\\APCWithoutCoreStructure2_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
+                    std::string directoryName = "E:\\Calculations\\Debugging Suite\\RemoveDDAModelfromObjDDAModel_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
                     cout << "Storing data in : " << directoryName << endl;
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");

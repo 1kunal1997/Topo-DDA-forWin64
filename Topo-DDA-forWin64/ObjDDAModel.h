@@ -1,7 +1,7 @@
 #ifndef TOPO_OBJ_H_
 #define TOPO_OBJ_H_
 
-#include "DDAModel.h"
+#include "AProductCore.h"
 #include <fstream>
 
 class ObjDDAModel {
@@ -30,12 +30,12 @@ private:
     int N;
     VectorXcd* P;
     VectorXi* R;
-    DDAModel* model;
     //EvoDDAModel* evomodel;
+    AProductCore* Core;
     Vector3cd E_sum;
     Vector3cd E_ext;
 public:
-    ObjPointEDDAModel(vector<double> parameters, DDAModel* model_);
+    ObjPointEDDAModel(vector<double> parameters, AProductCore* Core_, double d_, int N_, VectorXcd* P_, VectorXi* R_, double E0_, double K_, Vector3d n_E0_, Vector3d n_K_);
     void SingleResponse(int idx, bool deduction, bool hasPenalty = false);
     void SingleResponseWithoutPenalty(int idx, bool deduction);
     double GroupResponse();
@@ -63,8 +63,6 @@ private:
     VectorXd* diel_old;
     VectorXcd* P;
     VectorXi* R;
-    DDAModel* model;
-    VectorXd* Params;
     VectorXcd* al;
     double penalty;
     double E_int;
@@ -73,7 +71,7 @@ private:
     
     
 public:
-    ObjIntegratedEDDAModel(vector<double> parameters, DDAModel* model_);
+    ObjIntegratedEDDAModel(vector<double> parameters, int N_, VectorXcd* P_, VectorXi* R_, VectorXcd* al_);
     void SingleResponse(int idx, bool deduction, bool hasPenalty = true);
     void SingleResponseWithoutPenalty(int idx, bool deduction);
     double GroupResponse();
