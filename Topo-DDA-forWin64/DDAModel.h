@@ -3,6 +3,19 @@
 
 #include "AProductCore.h"
 #include "ObjDDAModel.h"
+#include "filterOption.h"
+
+#include <list>
+#include <vector>
+#include "Eigen/Core"
+
+using namespace std;
+using namespace Eigen;
+
+struct WeightPara {
+    double weight;
+    int position;
+}; 
 
 class DDAModel {
 private:
@@ -33,11 +46,12 @@ private:
     int Nz;
     double d;
     VectorXi* geometry;
-    VectorXd* diel_old;
+    //VectorXd* diel_old;
     double K;
     double lam;
     VectorXcd* material;
-    VectorXd* Para;
+    //VectorXd* Para;
+    int NFpara;
 
     vector<double> objPara;
     string objName;
@@ -47,9 +61,26 @@ private:
     int ITERATION;
     double Error;
 
+    VectorXd dielectric_old;                //The 0~1 version of diel, 3*N
+    VectorXd diel_old_max;
+
+    // from StructureSpaceParahello
+    VectorXi geometryPara;            //N dimension. N=number of dipoles. Each position stores the para index in VectorXi Para : 0->Para[0]...
+    vector<vector<int>> Paratogeometry;
+    VectorXd parameters;                    // THESE ARE THE INPUTDIELS !!! P dimension. P=number of parameters. Same as Para_origin if Filter=False. Filtered and biased para if Filter=True.
+    VectorXd Para_origin;             //Un-filtered, unbiased para. No use when Filter=False.
+    VectorXd Para_filtered;           //Filtered but unbiased para. No use when Filter=False.
+    bool Filter;                      //True for with Filter. False for without Filter. Defualt as False for most initilizations.
+    FilterOption* Filterstats;        //Only used when Filter=True
+    vector<vector<WeightPara>> FreeWeight;
+    bool Periodic;
+    int Lm;
+    int Ln;
+
 
 public:
     DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* geometry_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
+    DDAModel(bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, string objName_, vector<double> objPara_, VectorXi* geometry_, VectorXd* Inputdiel, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_ = true);
     ~DDAModel( );
     void bicgstab(int MAX_ITERATION, double MAX_ERROR);
     void bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION);  //FOR DEBUG ONLY. OUTPUT SOME VALUE AT CERTAIN EVO ITERATION.
@@ -81,6 +112,25 @@ public:
     void SingleResponse(int idx, bool deduction);
     double GroupResponse( );
 
+    void assignFreeWeightsForFilter( );
+    void UpdateStr(VectorXd step, int current_it, int Max_it);
+    void UpdateStrSingle(int idx, double value);
+    void outputCStr_to_file(string save_position, int iteration, string mode = "normal");
+    VectorXi* get_geometryPara( );
+    VectorXd* get_parameters( );
+    VectorXd* get_Para_origin( );
+    VectorXd* get_Para_filtered( );
+    bool get_Filter( );
+    FilterOption* get_Filterstats( );
+    vector<vector<WeightPara>>* get_FreeWeight( );
+    vector<vector<int>>* get_Paratogeometry( );
+    VectorXd* get_dielectric_old( );
+    VectorXd* get_diel_old_max( );
+
+    tuple<VectorXd, VectorXcd> devx_and_Adevxp(double epsilon, double origin);
+    VectorXcd devp(double epsilon, double origin);
+    VectorXd calculateGradients(double epsilon_partial, double originalObjValue, int MAX_ITERATION, double MAX_ERROR, VectorXcd* PolarizationforAdjoint_, bool HaveAdjointHeritage);
+
     //-----------------From AProductCore-----------------------
 
     int get_N();
@@ -90,8 +140,6 @@ public:
     double get_lam( );
     double get_d();
     VectorXi* get_geometry();
-    VectorXd* get_diel_old();
-    VectorXd* get_Para( );
 };
 
 #endif

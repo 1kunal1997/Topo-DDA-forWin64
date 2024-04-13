@@ -2,7 +2,6 @@
 #define TOPO_EVO_H_
 
 #include "DDAModel.h"
-#include "CoreStructure.h"
 
 using namespace std;
 using namespace Eigen;
@@ -10,7 +9,6 @@ using namespace Eigen;
 class EvoDDAModel {
 private:
     double output_time;
-    CoreStructure* CStr;
     vector<DDAModel*> allModel;                    //List of DDA models sharing the same AProductCore : "Core"
     DDAModel* Model;
     int ModelNum = 1;                                 //number of DDA model
@@ -49,7 +47,7 @@ private:
     VectorXd gradientsquare;                    //cumulative summation of gradients square. Used in Adagrad.
 public:
 
-    EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, CoreStructure* CStr_, DDAModel* Model_);
+    EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, DDAModel* Model_);
    // VectorXd calculateGradient();
 
     //functions used to calculate partial derivatives                                                        

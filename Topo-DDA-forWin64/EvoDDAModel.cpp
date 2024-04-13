@@ -7,7 +7,7 @@
 
 using namespace std::chrono;
 
-EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, CoreStructure* CStr_, DDAModel* Model_) {
+EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilon_fix_, bool HavePathRecord_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, string save_position_, DDAModel* Model_) {
     output_time = 0.0;
     objName = objName_;
     save_position = save_position_;
@@ -21,7 +21,6 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
     HaveAdjointHeritage = HaveAdjointHeritage_;
     MaxObj = 0.0;
     Stephold = 0;
-    CStr = CStr_;
     Model = Model_;
 
     double lam = (Model->get_Core( ))->get_lam( );
@@ -32,7 +31,7 @@ EvoDDAModel::EvoDDAModel(string objName_, vector<double> objPara_, double epsilo
     PreviousObj = 0.0;
     CutoffHold = 0;
 
-    VectorXd* Para = (*CStr).get_Para();
+    VectorXd* Para = Model->get_parameters();
     int n_para = (*Para).size();                     //Total number of parameters
     gradientsquare = VectorXd::Zero(n_para);
 
@@ -88,7 +87,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         double penalty = 0.0;
 
         auto out_start = high_resolution_clock::now();
-        (*CStr).output_to_file(save_position + "CoreStructure\\", iteration + start_num, "simple");
+        Model->outputCStr_to_file(save_position + "CoreStructure\\", iteration + start_num, "simple");
         auto out_end = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(out_end - out_start).count();
         output_time += duration;
@@ -125,8 +124,8 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 
         high_resolution_clock::time_point t0 = high_resolution_clock::now();
 
-        VectorXd* diel_old = (*CStr).get_diel_old();
-        VectorXd* diel_old_max = (*CStr).get_diel_old_max();
+        VectorXd* diel_old = Model->get_dielectric_old();
+        VectorXd* diel_old_max = Model->get_diel_old_max();
 
         double epsilon = epsilon_fix;
 
@@ -214,18 +213,19 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         convergence << "\n";
         convergenceWithPenalty << "\n";
 
-        VectorXi* geometryPara = (*CStr).get_geometryPara();
-        VectorXd* Para = (*CStr).get_Para();
+        VectorXd* Para = Model->get_parameters();
         int n_para_all = (*Para).size();
         int N = Model->get_N();
-        vector<vector<int>>* Paratogeometry = (*CStr).get_Paratogeometry();
+        vector<vector<int>>* Paratogeometry = Model->get_Paratogeometry();
 
         cout << "n_para_all is: " << n_para_all << endl;
 
         VectorXd penaltygradients = VectorXd::Zero(n_para_all);
-        VectorXd objgradients = VectorXd::Zero(n_para_all);
+        //VectorXd objgradients = VectorXd::Zero(n_para_all);
+        VectorXd objgradients = Model->calculateGradients(epsilon_partial, originalObjValue, MAX_ITERATION, MAX_ERROR, &PolarizationforAdjoint, HaveAdjointHeritage);
         VectorXd gradients = VectorXd::Zero(n_para_all);
 
+        /*
         cout << "about to start partial derivative part" << endl;
 
         //----------------------------------------get partial derivative of current model---------------------------
@@ -286,6 +286,8 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         }
         objgradients = devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
 
+        */
+
         for (int i = 0; i <= n_para_all - 1; i++) {
             penaltygradients(i) = 1 - 2 * (*Para)(i);
         }
@@ -315,7 +317,7 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
 
         gradients = objgradients - coeff * penaltygradients;
 
-        if ((*CStr).get_Filter() && (iteration >= 1)) {
+        if (Model->get_Filter() && (iteration >= 1)) {
             //For iteration=0, Para, Para_origin, Para_filtered are all the same. No need for updating gradients.
             //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
             cout << "-----------ENTERED FILTER IF STATEMENT!!!----------------" << endl;
@@ -397,18 +399,18 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         cout << "epsilon = " << epsilon << endl;
         cout << "step = " << step.mean() << endl;
 
-        if ((*CStr).get_Filter()) {
-            if ((*((*CStr).get_Filterstats())).filterchange(iteration)) {
+        if (Model->get_Filter()) {
+            if ((*(Model->get_Filterstats())).filterchange(iteration)) {
                 cout << "ABOUT TO CHANGE THE FILTER!!!" << endl;
-                (*CStr).assignFreeWeightsForFilter();
+                Model->assignFreeWeightsForFilter();
             }
         }
         cout << "right before spaceparams sentence" << endl;
-        VectorXd* Params = (*CStr).get_Para();
+        VectorXd* Params = Model->get_parameters();
         penalty = calculatePenalty(*Params);
         cout << "PENALTY AFTER GRADIENTS IS: " << 40 * penalty << endl;
 
-        (*CStr).UpdateStr(step, iteration, MAX_ITERATION_EVO - 1);
+        Model->UpdateStr(step, iteration, MAX_ITERATION_EVO - 1);
         (*Model).UpdateAlpha();                  //Dont forget this, otherwise bicgstab wont change
 
     }
@@ -463,7 +465,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
 
             if (Model->get_HaveDevx()) 
                 Model->SingleResponse(position, true);
-            (*CStr).UpdateStrSingle(position, diel_old_tmp);
+            Model->UpdateStrSingle(position, diel_old_tmp);
             (*Model).UpdateAlphaSingle(position);
 
             if (Model->get_HaveDevx()) 
@@ -483,7 +485,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon
             if (Model->get_HaveDevx()) 
                 Model->SingleResponse(position, true);
 
-            (*CStr).UpdateStrSingle(position, diel_old_origin);
+            Model->UpdateStrSingle(position, diel_old_origin);
             (*Model).UpdateAlphaSingle(position);
 
             if (Model->get_HaveDevx()) 
@@ -570,8 +572,8 @@ double PtoFderivative(const double input, const double beta, const double ita) {
 
 VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int Max_it) {
 
-    FilterOption* fo = (*CStr).get_Filterstats();
-    const VectorXd* Para_filtered = (*CStr).get_Para_filtered();
+    FilterOption* fo = Model->get_Filterstats();
+    const VectorXd* Para_filtered = Model->get_Para_filtered();
     (*fo).update_beta(current_it, Max_it);                     //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
     const double gbeta = (*fo).get_beta();
     const double gita = (*fo).get_ita();
@@ -579,7 +581,7 @@ VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int
 
     int NFpara = gradients.size();
     VectorXd result = VectorXd::Zero(NFpara);
-    const vector<vector<WeightPara>>* FreeWeight = (*CStr).get_FreeWeight();
+    const vector<vector<WeightPara>>* FreeWeight = Model->get_FreeWeight();
     if (NFpara != (*FreeWeight).size()) {
         cout << "ERROR: EvoDDAModel::gradients_filtered--NFpara != (*FreeWeight).size()" << endl;
         cout << "NFPara is: " << NFpara << endl;

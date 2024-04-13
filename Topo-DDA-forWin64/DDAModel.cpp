@@ -3,11 +3,14 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
+#include <map>
 
 #include "DDAModel.h"
 #include "Tools.h"
 
 using namespace std::chrono;
+
+ // namespace
 
 ObjDDAModel* DDAModel::ObjFactory(string ObjectName, vector<double> ObjectParameters) {
     /*if (HavePenalty) {
@@ -24,8 +27,168 @@ ObjDDAModel* DDAModel::ObjFactory(string ObjectName, vector<double> ObjectParame
     cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
     return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, geometry, &al);
 }
+void FCurrentinsert(map<vector<int>, int>* FCurrent, vector<int> currentxy, int* currentpos, string insertmode, vector<double>* symaxis) {
+    if ( insertmode == "None" ) {
+        ( *FCurrent ).insert(pair<vector<int>, int>(currentxy, *currentpos));
+        ( *currentpos ) += 1;
+    }
+    else if ( insertmode == "4fold" ) {
+        vector<int> sym1{ int(round(2 * ( *symaxis )[ 0 ] - currentxy[ 0 ])), currentxy[ 1 ] };
+        vector<int> sym2{ int(round(2 * ( *symaxis )[ 0 ] - currentxy[ 0 ])), int(round(2 * ( *symaxis )[ 1 ] - currentxy[ 1 ])) };
+        vector<int> sym3{ currentxy[ 0 ], int(round(2 * ( *symaxis )[ 1 ] - currentxy[ 1 ])) };
+        if ( ( *FCurrent ).count(sym1) ) {
+            ( *FCurrent ).insert(pair<vector<int>, int>(currentxy, ( *FCurrent )[ sym1 ]));
+        }
+        else if ( ( *FCurrent ).count(sym2) ) {
+            ( *FCurrent ).insert(pair<vector<int>, int>(currentxy, ( *FCurrent )[ sym2 ]));
+        }
+        else if ( ( *FCurrent ).count(sym3) ) {
+            ( *FCurrent ).insert(pair<vector<int>, int>(currentxy, ( *FCurrent )[ sym3 ]));
+        }
+        else {
+            ( *FCurrent ).insert(pair<vector<int>, int>(currentxy, *currentpos));
+            ( *currentpos ) += 1;
+        }
+    }
+    else {
+        cout << "FCurrentinsert: This sym mode not supported yet" << endl;
+        throw 1;
+    }
+}
 
-DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, VectorXi* geometry_, VectorXd* diel_old_, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
+double calweight(int xo, int yo, int x, int y, double r) {
+    return r - sqrt(double(x - xo) * double(x - xo) + double(y - yo) * double(y - yo));
+}
+
+bool circlerange(int xo, int yo, int x, int y, double r) {
+    if ( double(x - xo) * double(x - xo) + double(y - yo) * double(y - yo) <= r * r - 0.01 ) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+DDAModel::DDAModel(bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, string objName_, vector<double> objPara_, VectorXi* geometry_, VectorXd* Inputdiel, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
+    d = d_;
+    Filter = Filter_;
+    geometry = geometry_;
+    Nx = Nx_;
+    Ny = Ny_;
+    Nz = Nz_;
+    N = N_;
+    Periodic = Periodic_;
+    Lm = Lm_;
+    Ln = Ln_;
+
+    int dividesym;
+    if ( symmetry == "None" ) {
+        dividesym = 1;
+    }
+    else if ( symmetry == "4fold" ) {
+        dividesym = 4;
+    }
+    else {
+        cout << "SpacePara: not None nor 4 fold. Not supported" << endl;
+        throw 1;
+    }
+
+    NFpara = int(round(( int(geometry->size( )) / 3 / Nz / dividesym )));    // number of free parameters. for extruded, symmetric, take one quadrant of one xy-plane of geo. 121 in standard case
+    cout << "NFpara" << NFpara << endl;
+
+    parameters = VectorXd::Zero(NFpara);
+    geometryPara = VectorXi::Zero(N);
+
+    // stores an index that can be used to find the free parameter index associated with that index.
+    // uses symmetry and reflections in FCurrentInsert to keep the range [0,120]. for example, 
+    // geometryPara(Nx-1) = 1, geometry(Nx) = 0, geometry(Nx*Ny+1)=0 because of symmetry/extrusions.
+    geometryPara = VectorXi::Zero(N);
+    map<vector<int>, int> FCurrent;         // only used to design geometryPara, so can be removed if geometryPara designed differently
+    int currentpos = 0;
+    for ( int i = 0; i <= N - 1; i++ ) {
+        int x = ( *geometry ) ( 3 * i );
+        int y = ( *geometry ) ( 3 * i + 1 );
+
+        vector<int> currentxy{ x,y };
+
+        // for extruded geometries, same xy position can be used to refer to pixels that have different z-coord.
+        if ( !FCurrent.count(currentxy) ) {
+
+            FCurrentinsert(&FCurrent, currentxy, &currentpos, symmetry, &symaxis);
+        }
+        geometryPara(i) = FCurrent[ currentxy ];
+        //cout << "geometryPara(" << i << ") is: " << geometryPara(i) << endl;
+    }
+
+    // This is used to map a free parameter position (0 to NFPara, or 121) to a vector of
+    // positions that this free parameter maps to, considering relfections and extrusions.
+    // for example, the first vector would be (0, Nx, Nx*Ny-Nx, Nx*Ny, ...). if Nz is 10,
+    // and you have symmetry, each position will map to 10*4, or 40 other pixels.
+    Paratogeometry = vector<vector<int>>(NFpara);
+    for ( int i = 0; i <= N - 1; i++ ) {
+        //cout << "dipole position : " << i << endl;
+
+        ( Paratogeometry[ geometryPara(i) ] ).push_back(i);
+
+        /*vector<int> currentvector = Paratogeometry[geometryPara(i)];
+        for (int j = 0; j < currentvector.size(); j++) {
+            cout << "Paratogeometry at index " << j << " is: " << currentvector[j] << endl;
+        } */
+
+    }
+
+    // used to map a pixel vector to its inputdiel value (0-1)
+    map<vector<int>, double> Inputmap;
+    if ( geometry->size( ) != ( *Inputdiel ).size( ) ) {
+        cout << "ERROR: SpacePara::SpacePara: Filter==(*InputGeo).size() != (*Inputdiel).size()" << endl;
+        throw 1;
+    }
+    int Inputsize = int(round(int( geometry->size( )) / 3));
+    for ( int i = 0; i < Inputsize; i++ ) {
+        Inputmap.insert(pair<vector<int>, double>(vector<int>{( *geometry ) ( 3 * i ), ( *geometry ) ( 3 * i + 1 ), ( *geometry ) ( 3 * i + 2 )}, ( *Inputdiel )( 3 * i )));
+    }
+
+    // used to fill Para, which are the parameter values of the free indices (NFpara)
+    // or one quadrant in a symmetric, extruded structure. using Paratogeometry here
+    // to fetch each position, but if this is the only use of Paratogeometry, seems useless.
+    for ( int i = 0; i < NFpara; i++ ) {
+
+        int pos = Paratogeometry[ i ][ 0 ];
+        //cout << "Pos at position " << i << " is: " << pos << endl;
+        vector<int> node{ ( *geometry ) ( 3 * pos ), ( *geometry ) ( 3 * pos + 1 ), ( *geometry ) ( 3 * pos + 2 ) };
+        parameters(i) = Inputmap[ node ];
+    }
+    cout << "para values:" << endl;
+
+    for ( int i = 0; i < parameters.size( ); i++ ) {
+        cout << parameters(i) << " ";
+    }
+
+    if ( Filter == true ) {
+        Para_origin = parameters;
+        Para_filtered = parameters;
+        Filterstats = Filterstats_;
+        if ( Filterstats == NULL ) {
+            cout << "ERROR: SpacePara::SpacePara: Filter==true then Filterstats must be passed in." << endl;
+            throw 1;
+        }
+
+        assignFreeWeightsForFilter( );
+
+    }
+
+    // original CoreStructure stuff below
+
+    //---------------------------------------------------initial diel------------------------------------
+    dielectric_old = VectorXd::Zero(3 * N);
+    diel_old_max = dielectric_old;
+    for ( int i = 0; i <= N - 1; i++ ) {
+        double dieltmp = parameters(geometryPara(i));
+        dielectric_old(3 * i) = dieltmp;
+        dielectric_old(3 * i + 1) = dieltmp;
+        dielectric_old(3 * i + 2) = dieltmp;
+    }
+
     Core = new AProductCore(Nx_, Ny_, Nz_, N_, d_, lam_, material_, nback_, MAXm_, MAXn_, Lm_ * d_, Ln_ * d_, AMatrixMethod_);
     time = 0;
     ITERATION = 0;
@@ -44,9 +207,7 @@ DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, Ve
     K = Core->get_K( );
     d = d_;
     geometry = geometry_;
-    diel_old = diel_old_;
-    material = Core->get_material();
-    Para = Para_;
+    material = Core->get_material( );
 
     objDDAModel = ObjFactory(objName_, objPara_);
     RResultSwitch = false;
@@ -65,12 +226,12 @@ DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, Ve
     al = VectorXcd::Zero(N * 3);
     diel = VectorXcd::Zero(N * 3);
     for ( int i = 0; i < N * 3; i++ ) {
-        int labelfloor = int(floor(( *diel_old )( i )));
+        int labelfloor = int(floor(dielectric_old( i )));
         int labelnext = labelfloor + 1;
         if ( labelfloor >= 1 ) {
             labelnext = labelfloor;
         }
-        std::complex<double> diel_tmp = ( *material )( labelfloor ) + ( ( *diel_old )( i ) - double(labelfloor) ) * ( ( *material )( labelnext ) - ( *material )( labelfloor ) );
+        std::complex<double> diel_tmp = ( *material )( labelfloor ) + (dielectric_old( i ) - double(labelfloor) ) * ( ( *material )( labelnext ) - ( *material )( labelfloor ) );
         diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
@@ -84,6 +245,406 @@ DDAModel::DDAModel(string objName_, vector<double> objPara_, VectorXd* Para_, Ve
 DDAModel::~DDAModel( ) {
     delete Core;
     Core = nullptr;
+}
+
+VectorXd DDAModel::calculateGradients(double epsilon_partial, double originalObjValue, int MAX_ITERATION, double MAX_ERROR, VectorXcd* PolarizationforAdjoint_, bool HaveAdjointHeritage) {
+
+    VectorXd gradients = VectorXd::Zero(NFpara);
+
+    cout << "about to start partial derivative part" << endl;
+
+    //----------------------------------------get partial derivative of current model---------------------------
+    high_resolution_clock::time_point t1 = high_resolution_clock::now( );
+    cout << "---------------------------START PARTIAL DERIVATIVE ----------------------" << endl;
+    VectorXd devx;
+    VectorXcd Adevxp;
+    VectorXcd devp;
+    tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, originalObjValue);
+    //tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, Model, objfunc, originalObjValue);
+    cout << "done with devx and adevxp, starting with devp" << endl;
+    devp = this->devp(epsilon_partial, originalObjValue);
+    cout << "done with devp, changing E using devp" << endl;
+    high_resolution_clock::time_point t2 = high_resolution_clock::now( );
+    auto duration = duration_cast< milliseconds >( t2 - t1 ).count( );
+    cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
+
+    //------------------------------------Solving adjoint problem-----------------------------------------
+    cout << "---------------------------START ADJOINT PROBLEM ----------------------" << endl;
+
+    change_E(devp);
+    InitializeP(*PolarizationforAdjoint_);
+    bicgstab(MAX_ITERATION, MAX_ERROR);
+
+    if ( HaveAdjointHeritage == true ) {
+        PolarizationforAdjoint_ = get_P( );
+    } 
+
+    VectorXcd lambdaT = P;
+    reset_E( );                                  //reset E to initial value
+    //Adjointiterations << ( *Model ).get_ITERATION( ) << endl;
+    //TotalAdjointIt += ( *Model ).get_ITERATION( );
+
+    cout << "D O N E!" << endl;
+    //times lambdaT and Adevxp together
+    VectorXcd mult_result;
+    mult_result = VectorXcd::Zero(NFpara);               //multiplication result has the length of parameter
+
+    for ( int i = 0; i <= NFpara - 1; i++ ) {
+        int FreeParaPos = i;
+
+        vector<int>::iterator it = Paratogeometry[ FreeParaPos ].begin( );
+        for ( int j = 0; j <= Paratogeometry[ FreeParaPos ].size( ) - 1; j++ ) {
+            int position = *it;
+            mult_result(i) += lambdaT(3 * position) * Adevxp(3 * position);
+            mult_result(i) += lambdaT(3 * position + 1) * Adevxp(3 * position + 1);
+            mult_result(i) += lambdaT(3 * position + 2) * Adevxp(3 * position + 2);
+            it++;
+        }
+    }
+    cout << "D O N E!" << endl;
+    VectorXd mult_result_real = VectorXd::Zero(NFpara);
+    for ( int i = 0; i <= NFpara - 1; i++ ) {
+        complex<double> tmp = mult_result(i);
+        mult_result_real(i) = tmp.real( );
+    }
+    gradients = devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
+
+    return gradients;
+
+}
+
+tuple<VectorXd, VectorXcd> DDAModel::devx_and_Adevxp(double epsilon, double origin) {
+
+    VectorXcd Adevxp = VectorXcd::Zero(3 * N);
+    VectorXd devx = VectorXd::Zero(NFpara);
+
+    cout << "NFpara is: " << NFpara << endl;
+
+    for ( int i = 0; i < NFpara; i++ ) {
+        int FreeParaPos = i;
+        if ( FreeParaPos != i ) {
+            cout << "----------------------------ERROR IN FREEPARAPOS!!--------------------------" << endl;
+        }
+        double diel_old_origin = parameters(FreeParaPos);
+        double diel_old_tmp = diel_old_origin;
+        int sign = 0;
+        if ( diel_old_origin >= epsilon ) {
+            sign = -1;
+        }
+        else {
+            sign = 1;
+        }
+        diel_old_tmp += sign * epsilon;
+
+        vector<int>::iterator it = Paratogeometry[ FreeParaPos ].begin( );
+        for ( int j = 0; j <= Paratogeometry[ FreeParaPos ].size( ) - 1; j++ ) {
+            //cout << (*it) << endl;
+            int position = *it;
+            complex<double> alphaorigin = al( 3 * position );
+
+            if ( get_HaveDevx( ) )
+                SingleResponse(position, true);
+            UpdateStrSingle(position, diel_old_tmp);
+            UpdateAlphaSingle(position);
+
+            if ( get_HaveDevx( ) )
+                SingleResponse(position, false);
+            complex<double> change = ( al( 3 * position ) - alphaorigin ) / ( sign * epsilon );
+            Adevxp(3 * position) = change;
+            Adevxp(3 * position + 1) = change;
+            Adevxp(3 * position + 2) = change;
+
+            it++;
+        }
+
+        devx(i) = ( GroupResponse( ) - origin ) / ( sign * epsilon );  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
+        it = Paratogeometry[ FreeParaPos ].begin( );
+        for ( int j = 0; j <= Paratogeometry[ FreeParaPos ].size( ) - 1; j++ ) {
+            int position = *it;
+            if ( get_HaveDevx( ) )
+                SingleResponse(position, true);
+
+            UpdateStrSingle(position, diel_old_origin);
+            UpdateAlphaSingle(position);
+
+            if ( get_HaveDevx( ) )
+                SingleResponse(position, false);
+            it++;
+        }
+
+    }
+
+    for ( int i = 0; i <= 3 * N - 1; i++ ) {
+        Adevxp(i) = Adevxp(i) * P(i);
+    }
+
+    return make_tuple(devx, Adevxp);
+}
+
+VectorXcd DDAModel::devp(double epsilon, double origin) {
+    //move origin=Obj0->GetVal() outside because it is the same for one partial derivative of the entire structure
+
+    VectorXcd result = VectorXcd::Zero(P.size()); // 3N dimension
+
+    for ( int i = 0; i <= P.size( ) - 1; i++ ) {
+        int position = i / 3;
+
+        SingleResponse(position, true);
+
+        P(i) = P(i) + epsilon;
+
+        SingleResponse(position, false);
+
+        result(i) += ( GroupResponse() - origin ) / epsilon;
+
+        SingleResponse(position, true);
+
+        P(i) = P(i) - epsilon;
+
+        complex<double> epsilonimag = epsilon * 1.0i;
+
+        P(i) = P(i) + epsilonimag;
+
+        SingleResponse(position, false);
+
+        complex<double> tmpRes = ( GroupResponse() - origin ) / epsilonimag;
+        result(i) += tmpRes;
+
+        SingleResponse(position, true);
+
+        P(i) = P(i) - epsilonimag;
+
+        SingleResponse(position, false);
+    }
+    cout << "Devp_sum: " << result.sum( ) << endl;
+    return result;
+}
+
+void DDAModel::assignFreeWeightsForFilter( ) {
+    //Only works when freepara is 2D binding (Only do the filter in 2D)
+    int NFpara = parameters.size( );
+    FreeWeight = vector<vector<WeightPara>>(NFpara);
+
+    double rfilter = ( *Filterstats ).get_rfilter( );
+    for ( int i = 0; i <= NFpara - 1; i++ ) {
+        int poso = Paratogeometry[ i ][ 0 ];                 //As 2D extrusion is assumed, different z does not matter
+        int xo = ( *geometry ) ( 3 * poso );
+        int yo = ( *geometry ) ( 3 * poso + 1 );
+        int zo = ( *geometry ) ( 3 * poso + 2 );
+
+
+
+        for ( int j = 0; j <= NFpara - 1; j++ ) {
+            //bool inornot = false;
+            //cout << j << endl;
+            for ( int k = 0; k < Paratogeometry[ j ].size( ); k++ ) {
+                int posr = Paratogeometry[ j ][ k ];
+
+                int xr = ( *geometry ) ( 3 * posr );
+                int yr = ( *geometry ) ( 3 * posr + 1 );
+                int zr = ( *geometry ) ( 3 * posr + 2 );
+                if ( Periodic == false ) {
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr, yr, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr, yr, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                }
+                else {
+                    //Own cell
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr, yr, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr, yr, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //0, -1
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr, yr - Ln, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr, yr - Ln, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //-1, -1
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr - Lm, yr - Ln, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr - Lm, yr - Ln, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //-1, 0
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr - Lm, yr, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr - Lm, yr, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //-1, 1
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr - Lm, yr + Ln, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr - Lm, yr + Ln, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //0, 1
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr, yr + Ln, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr, yr + Ln, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //1, 1
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr + Lm, yr + Ln, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr + Lm, yr + Ln, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //1, 0
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr + Lm, yr, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr + Lm, yr, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                    //1, -1
+                    if ( ( zo == zr ) && ( circlerange(xo, yo, xr + Lm, yr - Ln, rfilter) ) ) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr + Lm, yr - Ln, rfilter);
+                        FreeWeight[ i ].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+                }
+
+
+            }
+
+        }
+    }
+}
+
+void DDAModel::UpdateStr(VectorXd step, int current_it, int Max_it) {
+    cout << "step in UpdateStr: " << step.mean( ) << endl;
+
+    int Parasize = parameters.size( );
+    if ( Parasize != step.size( ) ) {
+        cout << "ERROR: In CoreStructure::UpdateStr(VectorXd step), step.size!=FreePara.size";
+        throw 1;
+    }
+
+    if ( Filter == true ) {
+        //When there is filter
+        ( *Filterstats ).update_beta(current_it, Max_it);                  //Update beta value according to current iteration
+
+        for ( int i = 0; i <= Parasize - 1; i++ ) {
+            Para_origin(i) += step(i);
+            if ( Para_origin(i) >= 1 ) {
+                Para_origin(i) = 1;
+            }
+            if ( Para_origin(i) <= 0 ) {
+                Para_origin(i) = 0;
+            }
+        }
+
+        cout << "Beta at iteration " << current_it << " is " << Filterstats->get_beta( ) << endl;
+
+        for ( int i = 0; i <= Parasize - 1; i++ ) {
+            int weightnum = ( FreeWeight[ i ] ).size( );
+            double numerator = 0.0;
+            double denominator = 0.0;
+            for ( int j = 0; j <= weightnum - 1; j++ ) {
+                numerator += ( FreeWeight[ i ][ j ].weight ) * Para_origin(FreeWeight[ i ][ j ].position);
+                denominator += ( FreeWeight[ i ][ j ].weight );
+
+            }
+            Para_filtered(i) = numerator / denominator;
+
+            double Para_physical = Filterstats->SmoothDensity(Para_filtered(i));
+            parameters(i) = Para_physical;
+
+        }
+    }
+    else {//When there is no filter
+        for ( int i = 0; i <= Parasize - 1; i++ ) {
+            parameters(i) += step(i);
+            if ( parameters(i) >= 1 ) {
+                parameters(i) = 1;
+            }
+            if ( parameters(i) <= 0 ) {
+                parameters(i) = 0;
+            }
+        }
+    }
+
+
+    for ( int i = 0; i <= N - 1; i++ ) {
+        int position = geometryPara(i);
+        double value = parameters(position);
+        dielectric_old(3 * i) = value;
+        dielectric_old(3 * i + 1) = value;
+        dielectric_old(3 * i + 2) = value;
+    }
+}
+
+
+void DDAModel::UpdateStrSingle(int idx, double value) {
+
+    dielectric_old(3 * idx) = value;
+    dielectric_old(3 * idx + 1) = value;
+    dielectric_old(3 * idx + 2) = value;
+
+}
+
+void DDAModel::outputCStr_to_file(string save_position, int iteration, string mode) {
+
+    if ( mode == "normal" ) {
+        string name;
+        name = save_position + "CoreStructure" + to_string(iteration) + ".txt";
+        ofstream fout(name);
+        fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
+        fout << &geometry << endl;
+        fout << dielectric_old << endl;
+        fout << d << endl;
+        fout.close( );
+    }
+    else {
+        string name;
+        name = save_position + "CoreStructure" + to_string(iteration) + ".txt";
+        ofstream fout(name);
+        fout << dielectric_old << endl;
+        fout.close( );
+    }
 }
 
 double DDAModel::calculateObjective( ) {
@@ -331,13 +892,13 @@ void DDAModel::reset_E(){
 
 void DDAModel::UpdateAlpha() { 
 
-    for (int i = 0; i <= (*diel_old).size() - 1; i++) {
-        int labelfloor = int(floor((*diel_old)(i)));
+    for (int i = 0; i <= dielectric_old.size() - 1; i++) {
+        int labelfloor = int(floor(dielectric_old(i)));
         int labelnext = labelfloor + 1;
         if (labelfloor >= 1) {
             labelnext = labelfloor;
         }
-        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
+        std::complex<double> diel_tmp = (*material)(labelfloor) + (dielectric_old(i) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
         diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
@@ -345,12 +906,12 @@ void DDAModel::UpdateAlpha() {
 
 void DDAModel::UpdateAlphaSingle(int idx) {
 
-    int labelfloor = int(floor((*diel_old)(3 * idx)));
+    int labelfloor = int(floor(dielectric_old(3 * idx)));
     int labelnext = labelfloor + 1;
     if (labelfloor >= 1) {
         labelnext = labelfloor;
     }
-    std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(3 * idx) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
+    std::complex<double> diel_tmp = (*material)(labelfloor) + (dielectric_old(3 * idx) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
     diel(3 * idx) = diel_tmp;
     diel(3 * idx + 1) = diel_tmp;
     diel(3 * idx + 2) = diel_tmp;
@@ -523,9 +1084,58 @@ double DDAModel::get_d( ) {
 VectorXi* DDAModel::get_geometry( ) {
     return geometry;
 }
-VectorXd* DDAModel::get_diel_old( ) {
-    return diel_old;
+
+VectorXi* DDAModel::get_geometryPara( ) {
+    return &geometryPara;
 }
-VectorXd* DDAModel::get_Para( ) {
-    return Para;
+
+VectorXd* DDAModel::get_parameters( ) {
+    return &parameters;
+}
+
+VectorXd* DDAModel::get_Para_origin( ) {
+    if ( !Filter ) {
+        cout << "ERROR: SpacePara::get_Para_origin()--Filter can not be false" << endl;
+        throw 1;
+    }
+    return &Para_origin;
+}
+
+VectorXd* DDAModel::get_Para_filtered( ) {
+    if ( !Filter ) {
+        cout << "ERROR: SpacePara::get_Para_filtered()--Filter can not be false" << endl;
+        throw 1;
+    }
+    return &Para_filtered;
+}
+
+bool DDAModel::get_Filter( ) {
+    return Filter;
+}
+
+FilterOption* DDAModel::get_Filterstats( ) {
+    if ( !Filter ) {
+        cout << "ERROR: SpacePara::get_Filterstats()--Filter can not be false" << endl;
+        throw 1;
+    }
+    return Filterstats;
+}
+
+vector<vector<WeightPara>>* DDAModel::get_FreeWeight( ) {
+    if ( !Filter ) {
+        cout << "ERROR: SpacePara::get_FreeWeight()---Filter can not be false" << endl;
+        throw 1;
+    }
+    return &FreeWeight;
+}
+
+vector<vector<int>>* DDAModel::get_Paratogeometry( ) {
+    return &Paratogeometry;
+}
+
+VectorXd* DDAModel::get_dielectric_old( ) {
+    return &dielectric_old;
+}
+VectorXd* DDAModel::get_diel_old_max( ) {
+    return &diel_old_max;
 }

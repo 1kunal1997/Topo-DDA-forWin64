@@ -61,7 +61,7 @@ void task() {
 
                     //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     //std::string directoryName = "..\\Calculations\\Clipped Random Initial Structure\\" + std::to_string(j) + "ClipRandomness_0.4to0.6_it400_lam542_sym_filterOff_periodicFalse_beta0_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_0.0to0.5\\";
-                    std::string directoryName = "E:\\Calculations\\Debugging Suite\\RemoveObjDDAModelfromEvoDDAModel6_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
+                    std::string directoryName = "E:\\Calculations\\Debugging Suite\\MoveGradientsCalcToDDAModel_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
                     cout << "Storing data in : " << directoryName << endl;
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");
@@ -150,17 +150,17 @@ void task() {
                     string symmetry = readSymmetry.getSymmetry();
                     vector<double> symAxis = readSymmetry.getSymAxis();
                     cout << "Periodicity is: " << readTheFilter.getPeriodic() << endl;
-                    CoreStructure CStr(d, &inputGeo, Nx, Ny, Nz, N, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic( ), Lm, Ln);
+                    //CoreStructure CStr(d, &inputGeo, Nx, Ny, Nz, N, &inputDiel, filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic( ), Lm, Ln);
                     double nback = sqrt(real(material(0)));
-                    VectorXd* diel_old = CStr.get_diel_old( );
-                    VectorXd* Para = CStr.get_Para( );
+                    //VectorXd* diel_old = CStr.get_diel_old( );
+                    //VectorXd* Para = CStr.get_Para( );
                     cout << "CoreStructure created" << endl;
                     //AProductCore Core(&CStr, lam, material, nback, m, n, Lm * d, Ln * d, "FCD");
                     //cout << "AProductCore created" << endl;
                     ObjReader objReader(reader2);
                     string objName = objReader.GetObjName( );
                     vector<double> objPara = objReader.GetObjPara( );  //Focal spot position.
-                    DDAModel TestModel(objName, objPara, Para, &inputGeo, diel_old, Nx, Ny, Nz, N, n_K, E0, n_E0, lam, material, nback, m, n, Lm, Ln, "FCD", d);
+                    DDAModel TestModel(filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic( ), objName, objPara, &inputGeo, &inputDiel, Nx, Ny, Nz, N, n_K, E0, n_E0, lam, material, nback, m, n, Lm, Ln, "FCD", d);
                     cout << "TestModel created" << endl;
                     
                     // CHANGING THIS TO TRUE TO SEE WHAT HAPPENS!!! IT WAS ORIGINALLY FALSE!!
@@ -172,7 +172,7 @@ void task() {
 
 
 
-                    EvoDDAModel evoModel(objName, objPara, epsilonArray[i], HavePathRecord, HaveOriginHeritage, HaveAdjointHeritage, directoryName, &CStr, &TestModel);
+                    EvoDDAModel evoModel(objName, objPara, epsilonArray[i], HavePathRecord, HaveOriginHeritage, HaveAdjointHeritage, directoryName, &TestModel);
                     evoModel.EvoOptimizationQuick(weightArray[j], penaltytypeArray[k], MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam"); // line 393 in EvoDDAModel
                 }
             }
