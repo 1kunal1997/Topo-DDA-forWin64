@@ -221,72 +221,8 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
         cout << "n_para_all is: " << n_para_all << endl;
 
         VectorXd penaltygradients = VectorXd::Zero(n_para_all);
-        //VectorXd objgradients = VectorXd::Zero(n_para_all);
-        VectorXd objgradients = Model->calculateGradients(epsilon_partial, originalObjValue, MAX_ITERATION, MAX_ERROR, &PolarizationforAdjoint, HaveAdjointHeritage);
+        VectorXd objgradients = Model->calculateGradients(epsilon_partial, originalObjValue, MAX_ITERATION, MAX_ERROR);
         VectorXd gradients = VectorXd::Zero(n_para_all);
-
-        /*
-        cout << "about to start partial derivative part" << endl;
-
-        //----------------------------------------get partial derivative of current model---------------------------
-        high_resolution_clock::time_point t1 = high_resolution_clock::now();
-        cout << "---------------------------START PARTIAL DERIVATIVE ----------------------" << endl;
-        VectorXd devx;
-        VectorXcd Adevxp;
-        VectorXcd devp;
-        tie(devx, Adevxp) = this->devx_and_Adevxp_stateless(epsilon_partial, originalObjValue, Para, Paratogeometry);
-        //tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, Model, objfunc, originalObjValue);
-        cout << "done with devx and adevxp, starting with devp" << endl;
-        devp = this->devp(epsilon_partial, Model, originalObjValue);
-        cout << "done with devp, changing E using devp" << endl;
-        high_resolution_clock::time_point t2 = high_resolution_clock::now();
-        duration = duration_cast<milliseconds>(t2 - t1).count();
-        cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
-
-        //------------------------------------Solving adjoint problem-----------------------------------------
-        cout << "---------------------------START ADJOINT PROBLEM ----------------------" << endl;
-        (*Model).change_E(devp);
-
-        (*Model).InitializeP(PolarizationforAdjoint);
-
-        (*Model).bicgstab(MAX_ITERATION, MAX_ERROR);
-
-        if (HaveAdjointHeritage == true) {
-            PolarizationforAdjoint = *((*Model).get_P());
-        }
-
-        VectorXcd* P = (*Model).get_P();
-        VectorXcd lambdaT = (*P);
-        (*Model).reset_E();                                  //reset E to initial value
-        Adjointiterations << (*Model).get_ITERATION() << endl;
-        TotalAdjointIt += (*Model).get_ITERATION();
-
-        cout << "D O N E!" << endl;
-        //times lambdaT and Adevxp together
-        VectorXcd mult_result;
-        mult_result = VectorXcd::Zero(n_para_all);               //multiplication result has the length of parameter
-
-        for (int i = 0; i <= n_para_all - 1; i++) {
-            int FreeParaPos = i;
-
-            vector<int>::iterator it = (*Paratogeometry)[FreeParaPos].begin();
-            for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
-                int position = *it;
-                mult_result(i) += lambdaT(3 * position) * Adevxp(3 * position);
-                mult_result(i) += lambdaT(3 * position + 1) * Adevxp(3 * position + 1);
-                mult_result(i) += lambdaT(3 * position + 2) * Adevxp(3 * position + 2);
-                it++;
-            }
-        }
-        cout << "D O N E!" << endl;
-        VectorXd mult_result_real = VectorXd::Zero(n_para_all);
-        for (int i = 0; i <= n_para_all - 1; i++) {
-            complex<double> tmp = mult_result(i);
-            mult_result_real(i) = tmp.real();
-        }
-        objgradients = devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
-
-        */
 
         for (int i = 0; i <= n_para_all - 1; i++) {
             penaltygradients(i) = 1 - 2 * (*Para)(i);
@@ -321,9 +257,8 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
             //For iteration=0, Para, Para_origin, Para_filtered are all the same. No need for updating gradients.
             //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
             cout << "-----------ENTERED FILTER IF STATEMENT!!!----------------" << endl;
-            gradients = gradients_filtered(gradients, iteration - 1, MAX_ITERATION_EVO - 1);
+            gradients = Model->gradients_filtered(gradients, iteration - 1, MAX_ITERATION_EVO - 1);
         }
-
 
         double epsilon_final = epsilon;
 
@@ -406,15 +341,15 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
             }
         }
         cout << "right before spaceparams sentence" << endl;
-        VectorXd* Params = Model->get_parameters();
-        penalty = calculatePenalty(*Params);
+        penalty = calculatePenalty(*Para);
         cout << "PENALTY AFTER GRADIENTS IS: " << 40 * penalty << endl;
 
-        Model->UpdateStr(step, iteration, MAX_ITERATION_EVO - 1);
-        (*Model).UpdateAlpha();                  //Dont forget this, otherwise bicgstab wont change
+        //Model->UpdateStr(step, iteration, MAX_ITERATION_EVO - 1);
+        //(*Model).UpdateAlpha();                  //Dont forget this, otherwise bicgstab wont change
+
+        Model->UpdateParameters(step, MAX_ITERATION_EVO - 1);
 
     }
-
 
     Originiterations << TotalOriginIt << endl;
     Adjointiterations << TotalAdjointIt << endl;
@@ -423,201 +358,6 @@ void EvoDDAModel::EvoOptimizationQuick(double penaltyweight, string penaltytype,
     convergenceWithPenalty.close();
     Originiterations.close();
     Adjointiterations.close();
-
-}
-
-tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_stateless(double epsilon, double origin, VectorXd* para_, vector<vector<int>>* paratogeometry_) {
-
-    VectorXd* Para = para_;           // the values (0-1) of the free parameters ONLY (one quadrant, 2D)
-    vector<vector<int>>* Paratogeometry = paratogeometry_;
-
-    int N = (*Model).get_N();
-    VectorXcd* al = (*Model).get_al();       // members from DDAModel
-    VectorXcd* P = (*Model).get_P();
-
-    int n_para_all = (*Para).size();
-    VectorXcd Adevxp = VectorXcd::Zero(3 * N);
-    VectorXd devx = VectorXd::Zero(n_para_all);
-
-    cout << "n_para_all is: " << n_para_all << endl;
-
-    for (int i = 0; i < n_para_all; i++) {
-        int FreeParaPos = i;
-        if (FreeParaPos != i) {
-            cout << "----------------------------ERROR IN FREEPARAPOS!!--------------------------" << endl;
-        }
-        double diel_old_origin = (*Para)(FreeParaPos);
-        double diel_old_tmp = diel_old_origin;
-        int sign = 0;
-        if (diel_old_origin >= epsilon) {
-            sign = -1;
-        }
-        else {
-            sign = 1;
-        }
-        diel_old_tmp += sign * epsilon;
-
-        vector<int>::iterator it = (*Paratogeometry)[FreeParaPos].begin();
-        for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
-            //cout << (*it) << endl;
-            int position = *it;
-            complex<double> alphaorigin = (*al)(3 * position);
-
-            if (Model->get_HaveDevx()) 
-                Model->SingleResponse(position, true);
-            Model->UpdateStrSingle(position, diel_old_tmp);
-            (*Model).UpdateAlphaSingle(position);
-
-            if (Model->get_HaveDevx()) 
-                Model->SingleResponse(position, false);
-            complex<double> change = ((*al)(3 * position) - alphaorigin) / (sign * epsilon);
-            Adevxp(3 * position) = change;
-            Adevxp(3 * position + 1) = change;
-            Adevxp(3 * position + 2) = change;
-
-            it++;
-        }
-
-        devx(i) = (Model->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
-        it = (*Paratogeometry)[FreeParaPos].begin();
-        for (int j = 0; j <= (*Paratogeometry)[FreeParaPos].size() - 1; j++) {
-            int position = *it;
-            if (Model->get_HaveDevx()) 
-                Model->SingleResponse(position, true);
-
-            Model->UpdateStrSingle(position, diel_old_origin);
-            (*Model).UpdateAlphaSingle(position);
-
-            if (Model->get_HaveDevx()) 
-                Model->SingleResponse(position, false);
-            it++;
-        }
-
-    }
-
-    for (int i = 0; i <= 3 * N - 1; i++) {
-        Adevxp(i) = Adevxp(i) * ((*P)(i));
-    }
-
-    return make_tuple(devx, Adevxp);
-}
-
-VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, double origin){
-    //move origin=Obj0->GetVal() outside because it is the same for one partial derivative of the entire structure
-    VectorXcd* P = Model->get_P();
-    VectorXcd result=VectorXcd::Zero((*P).size()); // 3N dimension
-
-    for(int i=0;i<= (*P).size() -1;i++){
-        int position = i/3;
-        
-        Model->SingleResponse(position, true);
-        
-        (*P)(i)= (*P)(i)+epsilon;
-        
-        Model->SingleResponse(position, false);
-        
-        result(i)+=(Model->GroupResponse()-origin)/epsilon;
-        
-        Model->SingleResponse(position, true);
-        
-        (*P)(i)= (*P)(i)-epsilon;
-        
-        complex<double> epsilonimag=epsilon*1.0i;
-        
-        (*P)(i)= (*P)(i)+epsilonimag;
-        
-        Model->SingleResponse(position, false);
-        
-        complex<double> tmpRes = (Model->GroupResponse()-origin)/ epsilonimag;
-        result(i)+=tmpRes;
-        
-        Model->SingleResponse(position, true);
-        
-        (*P)(i)= (*P)(i)- epsilonimag;
-        
-        Model->SingleResponse(position, false);
-    }
-    cout << "Devp_sum: " << result.sum() << endl;
-    return result;
-}
-
-//double EvoDDAModel::L1Norm(){
-//    double Penalty = 0;
-//    int N = (*CStr).get_N();
-//    VectorXd* diel_old = (*CStr).get_diel_old();
-//    for (int i=0;i<N;i++){
-//        Penalty += 0.5-abs((*diel_old)(3*i)-0.5);
-//    }
-//    Penalty = Penalty * PenaltyFactor;
-//    return Penalty;
-//}
-
-double EvoDDAModel::get_output_time() {
-    return output_time / 1000;      //seconds
-}
-
-double PtoFderivative(const double input, const double beta, const double ita) {
-    double result = 0.0;
-    if (input <= ita && input >= 0.0) {
-        return beta * exp(-beta * (1 - input / ita)) + exp(-beta);
-    }
-    else if (input > ita && input <= 1.0) {
-        return beta * exp(-beta * (input - ita) / (1 - ita)) + exp(-beta);
-    }
-    else {
-        cout << "ERROR: PtoFderivative(const double input, const double beta, const double ita)--input out of range" << endl;
-        throw 1;
-    }
-}
-
-VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int Max_it) {
-
-    FilterOption* fo = Model->get_Filterstats();
-    const VectorXd* Para_filtered = Model->get_Para_filtered();
-    (*fo).update_beta(current_it, Max_it);                     //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
-    const double gbeta = (*fo).get_beta();
-    const double gita = (*fo).get_ita();
-    
-
-    int NFpara = gradients.size();
-    VectorXd result = VectorXd::Zero(NFpara);
-    const vector<vector<WeightPara>>* FreeWeight = Model->get_FreeWeight();
-    if (NFpara != (*FreeWeight).size()) {
-        cout << "ERROR: EvoDDAModel::gradients_filtered--NFpara != (*FreeWeight).size()" << endl;
-        cout << "NFPara is: " << NFpara << endl;
-        cout << "Freewight size: " << FreeWeight->size( ) << endl;
-        throw 1;
-    }
-    for (int i = 0; i <= NFpara - 1; i++) {
-        //int position = (*Free)(i);
-        //double pftmp = (*Para_filtered)(position);
-        //double ptofd = PtoFderivative(pftmp, gbeta, gita);
-
-        int num_weight = ((*FreeWeight)[i]).size();
-        double sum_weight = 0.0;
-        for (int j = 0; j <= num_weight - 1; j++) {
-            double weight = (*FreeWeight)[i][j].weight;
-            int weightpos = (*FreeWeight)[i][j].position;
-            sum_weight += weight;
-        }
-        for (int j = 0; j <= num_weight - 1; j++) {
-            double weight = (*FreeWeight)[i][j].weight;
-            int weightpos = (*FreeWeight)[i][j].position;
-            if (weightpos < NFpara) {                        //If there are non-paras also weighted but do not need to calculate gradients to.
-                result(weightpos) += (weight / sum_weight);     
-            }
-            
-        }
-    }
-
-    for (int i = 0; i <= NFpara - 1; i++) {
-        int position = i;
-        double pftmp = (*Para_filtered)(position);
-        double ptofd = PtoFderivative(pftmp, gbeta, gita);
-        result(position) = result(position) * ptofd * gradients(position);
-    }
-
-    return result;
 
 }
 

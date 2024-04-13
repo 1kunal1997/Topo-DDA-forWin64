@@ -129,7 +129,9 @@ public:
 
     tuple<VectorXd, VectorXcd> devx_and_Adevxp(double epsilon, double origin);
     VectorXcd devp(double epsilon, double origin);
-    VectorXd calculateGradients(double epsilon_partial, double originalObjValue, int MAX_ITERATION, double MAX_ERROR, VectorXcd* PolarizationforAdjoint_, bool HaveAdjointHeritage);
+    VectorXd calculateGradients(double epsilon_partial, double originalObjValue, int MAX_ITERATION, double MAX_ERROR);
+    VectorXd gradients_filtered(VectorXd gradients, int current_it, int Max_it);
+    void UpdateParameters(VectorXd step, int Max_it);
 
     //-----------------From AProductCore-----------------------
 
@@ -140,6 +142,11 @@ public:
     double get_lam( );
     double get_d();
     VectorXi* get_geometry();
+
+
+    double get_beta( );
+    double get_ita( );
+    void update_beta(const int iteration, const int Max_iteration);
 };
 
 #endif

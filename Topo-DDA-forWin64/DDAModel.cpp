@@ -70,6 +70,60 @@ bool circlerange(int xo, int yo, int x, int y, double r) {
 }
 
 DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatype_, vector<int> filterIterations_, vector<double> filterRadii_, bool Filter_, string symmetry, vector<double> symaxis, bool Periodic_, string objName_, vector<double> objPara_, VectorXi* geometry_, VectorXd* Inputdiel, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
+    /*
+    
+    Arguments:
+        
+        betamin_, betamax_, ita_, betatype: Used to update beta, which is used in the SmoothDensity function
+
+        filterIterations_: vector of ints (size determined by user) for which iteration to change the filter radius. 
+            used to construct 'filterinfo' struct.
+
+        filterRadii_: one-to-one mapping to 'filterIterations_' for setting the radii.
+
+        Filter_: boolean that determines whether you are using the internal Filter or not.
+
+        symmetry: string to turn on or off "4-fold" symmetry. to add other options for symmetry, look up 'dividesym'.
+
+        symaxis: vector of length 2 that sets the x and y coordinates for the axes of symmetry.
+
+        Periodic_: boolean for whether you want a periodic structure (in xy) or not.
+
+        objName_: name of the objective function to use.
+
+        objPara_: set of parameters needed for the corresponding obj function. size depends on obj function.
+
+        geometry_: vector of ints of length 3*N. numbering system for each pixel. (0, 0, 0, 1, 0, 0, 2, 0, 0, ...)
+
+        InputDiel_: vector of doubles of length 3*N. initialization of the pixel values (parameters)
+
+        Nx_, Ny_, Nz_,: ints for the number of pixels in the x, y, and z direction. 
+
+        N_: total number of pixels in structure
+
+        n_K_: vector of doubles of length 3. direction that incoming plane wave of light is propagating in.
+
+        n_E0_: vector of doubles of length 3. Defines the polarization of light.
+
+        E0_: amplitude of the incoming plane wave.
+
+        lam_: wavelength of the incoming plane wave.
+
+        material_: vector of complex doubles of length 2. first element is the dielectric function of external domain,
+            second element is the dielectric function of the material of interest. determined using interpolation.
+
+        nback_: refractive index of background.
+
+        MAXm_, MAXn_: integers used in AProductCore for periodicity reasons.
+
+        Lm_, Ln_: integers for periodic boundary in the x and y direction, respectively.
+
+        AMatrixMethod_: string used to determine which method to use in AProductCore.
+
+        d_: size of pixel in nanometers.
+
+    */
+    
     d = d_;
     Filter = Filter_;
     geometry = geometry_;
@@ -253,7 +307,65 @@ DDAModel::~DDAModel( ) {
     Core = nullptr;
 }
 
-VectorXd DDAModel::calculateGradients(double epsilon_partial, double originalObjValue, int MAX_ITERATION, double MAX_ERROR, VectorXcd* PolarizationforAdjoint_, bool HaveAdjointHeritage) {
+double PtoFderivative(const double input, const double beta, const double ita) {
+    double result = 0.0;
+    if ( input <= ita && input >= 0.0 ) {
+        return beta * exp(-beta * ( 1 - input / ita )) + exp(-beta);
+    }
+    else if ( input > ita && input <= 1.0 ) {
+        return beta * exp(-beta * ( input - ita ) / ( 1 - ita )) + exp(-beta);
+    }
+    else {
+        cout << "ERROR: PtoFderivative(const double input, const double beta, const double ita)--input out of range" << endl;
+        throw 1;
+    }
+}
+
+VectorXd DDAModel::gradients_filtered(VectorXd gradients, int current_it, int Max_it) {
+
+    Filterstats->update_beta(current_it, Max_it);                     //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
+    const double gbeta = Filterstats->get_beta( );
+    const double gita = Filterstats->get_ita( );
+
+    VectorXd result = VectorXd::Zero(NFpara);
+    if ( NFpara != FreeWeight.size( ) ) {
+        cout << "ERROR: EvoDDAModel::gradients_filtered--NFpara != (*FreeWeight).size()" << endl;
+        throw 1;
+    }
+    for ( int i = 0; i <= NFpara - 1; i++ ) {
+        //int position = (*Free)(i);
+        //double pftmp = (*Para_filtered)(position);
+        //double ptofd = PtoFderivative(pftmp, gbeta, gita);
+
+        int num_weight = ( FreeWeight[ i ] ).size( );
+        double sum_weight = 0.0;
+        for ( int j = 0; j <= num_weight - 1; j++ ) {
+            double weight = FreeWeight[ i ][ j ].weight;
+            int weightpos = FreeWeight[ i ][ j ].position;
+            sum_weight += weight;
+        }
+        for ( int j = 0; j <= num_weight - 1; j++ ) {
+            double weight = FreeWeight[ i ][ j ].weight;
+            int weightpos = FreeWeight[ i ][ j ].position;
+            if ( weightpos < NFpara ) {                        //If there are non-paras also weighted but do not need to calculate gradients to.
+                result(weightpos) += ( weight / sum_weight );
+            }
+
+        }
+    }
+
+    for ( int i = 0; i <= NFpara - 1; i++ ) {
+        int position = i;
+        double pftmp = Para_filtered( position );
+        double ptofd = PtoFderivative(pftmp, gbeta, gita);
+        result(position) = result(position) * ptofd * gradients(position);
+    }
+
+    return result;
+
+}
+
+VectorXd DDAModel::calculateGradients(double epsilon_partial, double originalObjValue, int MAX_ITERATION, double MAX_ERROR) {
 
     VectorXd gradients = VectorXd::Zero(NFpara);
 
@@ -278,12 +390,9 @@ VectorXd DDAModel::calculateGradients(double epsilon_partial, double originalObj
     cout << "---------------------------START ADJOINT PROBLEM ----------------------" << endl;
 
     change_E(devp);
-    InitializeP(*PolarizationforAdjoint_);
+    VectorXcd Ptmp = VectorXcd::Zero(N * 3);
+    InitializeP(Ptmp);
     bicgstab(MAX_ITERATION, MAX_ERROR);
-
-    if ( HaveAdjointHeritage == true ) {
-        PolarizationforAdjoint_ = get_P( );
-    } 
 
     VectorXcd lambdaT = P;
     reset_E( );                                  //reset E to initial value
@@ -558,6 +667,37 @@ void DDAModel::assignFreeWeightsForFilter( ) {
 
         }
     }
+}
+
+void DDAModel::UpdateParameters(VectorXd step, int Max_it) {
+    cout << "step in UpdateStr: " << step.mean( ) << endl;
+
+    int Parasize = parameters.size( );
+    if ( Parasize != step.size( ) ) {
+        cout << "ERROR: In CoreStructure::UpdateStr(VectorXd step), step.size!=FreePara.size";
+        throw 1;
+    }
+
+    for ( int i = 0; i <= Parasize - 1; i++ ) {
+        parameters(i) += step(i);
+        if ( parameters(i) >= 1 ) {
+            parameters(i) = 1;
+        }
+        if ( parameters(i) <= 0 ) {
+            parameters(i) = 0;
+        }
+    }
+
+    for ( int i = 0; i <= N - 1; i++ ) {
+        int position = geometryPara(i);
+        double value = parameters(position);
+        dielectric_old(3 * i) = value;
+        dielectric_old(3 * i + 1) = value;
+        dielectric_old(3 * i + 2) = value;
+    }
+
+    UpdateAlpha( );
+
 }
 
 void DDAModel::UpdateStr(VectorXd step, int current_it, int Max_it) {
@@ -1028,6 +1168,17 @@ void DDAModel::output_to_file(string save_position, int iteration) {
     fout.close();
 }
 
+double DDAModel::get_beta( ) {
+    return Filterstats->get_beta( );
+}
+
+double DDAModel::get_ita( ) {
+    return Filterstats->get_ita();
+}
+
+void DDAModel::update_beta(const int iteration, const int Max_iteration) {
+    Filterstats->update_beta(iteration, Max_iteration );
+}
 
 void DDAModel::InitializeP(VectorXcd& Initializer) {
     P = Initializer;
