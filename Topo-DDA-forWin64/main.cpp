@@ -61,7 +61,7 @@ void task() {
 
                     //std::string directoryName = ".\\randomdist_it300_lam542_sym_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_absolute_0.0to0.5\\";
                     //std::string directoryName = "..\\Calculations\\Clipped Random Initial Structure\\" + std::to_string(j) + "ClipRandomness_0.4to0.6_it400_lam542_sym_filterOff_periodicFalse_beta0_epsilon_0.1_penaltytype_" + penaltytypeArray[k] + "_0.0to0.5\\";
-                    std::string directoryName = "E:\\Calculations\\Debugging Suite\\MoveGradientsCalcToDDAModel_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
+                    std::string directoryName = "E:\\Calculations\\Debugging Suite\\FilterOptionCreatedInDDAModel_it300_lam542_sym_filter2to3_periodicFalse_beta0_epsilon_0.5_penalty_piecewise0.0to0.5\\";
                     cout << "Storing data in : " << directoryName << endl;
                     std::filesystem::create_directories(directoryName);
                     std::filesystem::create_directories(directoryName + "/CoreStructure");
@@ -146,6 +146,18 @@ void task() {
                     Ln = reader2.GetInteger("Periodicity Option", "Ly", -1);
                     FilterOption filterOpt(readTheFilter.getBetaMin(), readTheFilter.getBetaMax(), readTheFilter.getIta(), readTheFilter.getBetaType(), filterList);
 
+                    vector<int> filterIterations;
+                    vector<double> filterRadii;
+                    double betamin = readTheFilter.getBetaMin( );
+                    double betamax = readTheFilter.getBetaMax( );
+                    double ita = readTheFilter.getIta( );
+                    string betatype = readTheFilter.getBetaType( );
+
+                    for ( int i = 0; i < filterList.size( ); i++ ) {
+                        filterIterations.push_back(filterList[ i ].iteration);
+                        filterRadii.push_back(filterList[ i ].rfilter);
+                    }
+
                     symReader readSymmetry(reader2);
                     string symmetry = readSymmetry.getSymmetry();
                     vector<double> symAxis = readSymmetry.getSymAxis();
@@ -160,7 +172,7 @@ void task() {
                     ObjReader objReader(reader2);
                     string objName = objReader.GetObjName( );
                     vector<double> objPara = objReader.GetObjPara( );  //Focal spot position.
-                    DDAModel TestModel(filter, &filterOpt, symmetry, symAxis, readTheFilter.getPeriodic( ), objName, objPara, &inputGeo, &inputDiel, Nx, Ny, Nz, N, n_K, E0, n_E0, lam, material, nback, m, n, Lm, Ln, "FCD", d);
+                    DDAModel TestModel(betamin, betamax, ita, betatype, filterIterations, filterRadii, filter, symmetry, symAxis, readTheFilter.getPeriodic( ), objName, objPara, &inputGeo, &inputDiel, Nx, Ny, Nz, N, n_K, E0, n_E0, lam, material, nback, m, n, Lm, Ln, "FCD", d);
                     cout << "TestModel created" << endl;
                     
                     // CHANGING THIS TO TRUE TO SEE WHAT HAPPENS!!! IT WAS ORIGINALLY FALSE!!

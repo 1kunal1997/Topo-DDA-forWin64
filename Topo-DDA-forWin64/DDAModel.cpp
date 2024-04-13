@@ -69,7 +69,7 @@ bool circlerange(int xo, int yo, int x, int y, double r) {
     }
 }
 
-DDAModel::DDAModel(bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis, bool Periodic_, string objName_, vector<double> objPara_, VectorXi* geometry_, VectorXd* Inputdiel, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
+DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatype_, vector<int> filterIterations_, vector<double> filterRadii_, bool Filter_, string symmetry, vector<double> symaxis, bool Periodic_, string objName_, vector<double> objPara_, VectorXi* geometry_, VectorXd* Inputdiel, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
     d = d_;
     Filter = Filter_;
     geometry = geometry_;
@@ -91,6 +91,12 @@ DDAModel::DDAModel(bool Filter_, FilterOption* Filterstats_, string symmetry, ve
     else {
         cout << "SpacePara: not None nor 4 fold. Not supported" << endl;
         throw 1;
+    }
+
+    vector<filterinfo> rfilter;
+
+    for ( int i = 0; i < filterIterations_.size( ); i++ ) {
+        rfilter.push_back(filterinfo{ filterIterations_[i], filterRadii_[i]});
     }
 
     NFpara = int(round(( int(geometry->size( )) / 3 / Nz / dividesym )));    // number of free parameters. for extruded, symmetric, take one quadrant of one xy-plane of geo. 121 in standard case
@@ -167,7 +173,7 @@ DDAModel::DDAModel(bool Filter_, FilterOption* Filterstats_, string symmetry, ve
     if ( Filter == true ) {
         Para_origin = parameters;
         Para_filtered = parameters;
-        Filterstats = Filterstats_;
+        Filterstats = new FilterOption(betamin_, betamax_, ita_, betatype_, rfilter);
         if ( Filterstats == NULL ) {
             cout << "ERROR: SpacePara::SpacePara: Filter==true then Filterstats must be passed in." << endl;
             throw 1;
