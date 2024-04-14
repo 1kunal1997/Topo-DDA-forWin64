@@ -98,6 +98,17 @@ StyleCopReport.xml
 *.svclog
 *.scc
 
+# Build files.
+*.obj
+*.iobj
+*.ipdb
+*.log
+*.tlog
+# Project specific files
+Calculations/*
+para_150nm_cylin_atbound_lam542_it200_beta100_eps0.1_sym_AutomationTest*
+
+
 # Chutzpah Test files
 _Chutzpah*
 
