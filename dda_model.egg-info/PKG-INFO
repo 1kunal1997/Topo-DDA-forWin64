@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: dda-model
+Version: 0.0.1
+Summary: DDA module python bindings
+Author: Ben Coleman
+Author-email: bcoleman2048@gmail.com
+Requires-Python: >=3.7
+Provides-Extra: test
+Requires-Dist: pytest>=6.0; extra == "test"

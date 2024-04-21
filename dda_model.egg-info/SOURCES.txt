@@ -1,0 +1,8 @@
+README.md
+setup.py
+dda_model.egg-info/PKG-INFO
+dda_model.egg-info/SOURCES.txt
+dda_model.egg-info/dependency_links.txt
+dda_model.egg-info/not-zip-safe
+dda_model.egg-info/requires.txt
+dda_model.egg-info/top_level.txt
