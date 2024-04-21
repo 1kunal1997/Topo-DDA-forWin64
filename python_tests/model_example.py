@@ -1,4 +1,4 @@
-import py_dda_model
+import dda_model
 import numpy as np
 
 '''
