@@ -73,7 +73,7 @@ bool circlerange(int xo, int yo, int x, int y, double r) {
     }
 }
 
-DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatype_, vector<int> filterIterations_, vector<double> filterRadii_, bool Filter_, string symmetry, vector<double> symaxis, bool Periodic_, string objName_, vector<double> objPara_, VectorXi* geometry_, VectorXd* Inputdiel, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, bool verbose_) {
+DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatype_, vector<int> filterIterations_, vector<double> filterRadii_, bool Filter_, string symmetry, vector<double> symaxis, bool Periodic_, string objName_, vector<double> objPara_, VectorXi* geometry_, VectorXd* Inputdiel, int Nx_, int Ny_, int Nz_, int N_, Vector3d n_K_, double E0_, Vector3d n_E0_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, double d_, VectorXd sineIntegralValues_, VectorXd cosineIntegralValues_, double integralDelta_, bool verbose_) {
     /*
 
     // Note: Geometry was previously passed in as a pointer, but in the PythonBindings, it gets called with a temporary copy of the input
@@ -275,7 +275,7 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         dielectric_old(3 * i + 2) = dieltmp;
     }
 
-    Core = new AProductCore(Nx_, Ny_, Nz_, N_, d_, lam_, material_, nback_, MAXm_, MAXn_, Lm_ * d_, Ln_ * d_, AMatrixMethod_);
+    Core = new AProductCore(Nx_, Ny_, Nz_, N_, d_, lam_, material_, nback_, MAXm_, MAXn_, Lm_ * d_, Ln_ * d_, AMatrixMethod_, sineIntegralValues_, cosineIntegralValues_, integralDelta_);
     time = 0;
     ITERATION = 0;
     Error = 0.0;

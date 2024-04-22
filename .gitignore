@@ -2,6 +2,8 @@
 deps/
 # Ignore cmake build
 build/
+*CMakeCache.txt
+CMakeFiles
 
 # Ignore .egg-info (Python module) directories.
 *.egg-info*

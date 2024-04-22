@@ -9,7 +9,7 @@
 
 using namespace std::chrono;
 
-AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_) {
+AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, VectorXd sineIntegralValues, VectorXd cosineIntegralValues, double integralDelta) {
     MAXm = MAXm_;
     MAXn = MAXn_;
     Lm = Lm_;
@@ -30,7 +30,9 @@ AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double 
     }
     AMatrixMethod = AMatrixMethod_;
     if ( AMatrixMethod == "FCD" ) {
-        SiCiValue = new SiCi( );
+        // Note: This is dangerous, as SiCiValue is an uninitialized pointer
+        // if the method is not "FCD".
+        SiCiValue = new SiCi(sineIntegralValues, cosineIntegralValues, integralDelta);
     }
 
     cout << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;

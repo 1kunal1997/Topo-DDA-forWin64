@@ -26,7 +26,9 @@ PYBIND11_MODULE(_dda_model, module) { // NOLINT
             const double E0, Eigen::Vector3d n_E0,
             const double lam, Eigen::VectorXcd material,
             const double nback, const int MAXm, const int MAXn, const double Lm, const double Ln,
-            const std::string matrixAMethodName, const double d, const bool verbose
+            const std::string matrixAMethodName, const double d,
+            Eigen::VectorXd sineIntegralValues, Eigen::VectorXd cosineIntegralValues, const double integralDelta,
+            const bool verbose
         ) {
             return std::unique_ptr<DDAModel>(new DDAModel(
                 betaMin, betaMax, ita, betaType,
@@ -37,7 +39,9 @@ PYBIND11_MODULE(_dda_model, module) { // NOLINT
                 E0, n_E0,
                 lam, material,
                 nback, MAXm, MAXn, Lm, Ln,
-                matrixAMethodName, d, verbose
+                matrixAMethodName, d,
+                sineIntegralValues, cosineIntegralValues, integralDelta,
+                verbose
             ));
         }),
         py::arg("betaMin"), py::arg("betaMax"), py::arg("ita"), py::arg("betaType"), 
@@ -49,7 +53,10 @@ PYBIND11_MODULE(_dda_model, module) { // NOLINT
         py::arg("E0"), py::arg("n_E0"), 
         py::arg("lam"), py::arg("material"), 
         py::arg("nback"), py::arg("MAXm"), py::arg("MAXn"), py::arg("Lm"), py::arg("Ln"), 
-        py::arg("matrixAMethodName"), py::arg("d"), py::arg("verbose"))
+        py::arg("matrixAMethodName"), py::arg("d"),
+        py::arg("sineIntegralValues"), py::arg("cosineIntegralValues"), py::arg("integralDelta"),
+        py::arg("verbose")
+        )
         // Functions to calculate gradient and objective.
         .def("calculateObjective", &DDAModel::calculateObjective)
         .def("calculateGradients", &DDAModel::calculateGradients)
