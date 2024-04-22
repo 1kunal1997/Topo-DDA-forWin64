@@ -12,7 +12,7 @@ We strongly recommend developing within a conda environment. You can use the
 following commands to construct and activate a conda environment.
 
 ```
-conda env create -n environment_name
+conda create --name environment_name
 conda activate environment_name
 ```
 
@@ -22,7 +22,7 @@ download these modules alongside the Topo-DDA model repository, clone the
 repository using:
 
 ```
-git clone -b cmake-build --recurse-submodules git@github.com:1kunal1997/Topo-DDA-forWin64.git
+git clone --recurse-submodules
 ```
 
 If you forgot to use the `--recurse-submodules` flag, you can always just
@@ -42,6 +42,18 @@ conda install cuda -c nvidia
 
 If not using Anaconda, you can install the CUDA toolkit using a package manager
 of your choice or by downloading directly from NVIDIA (not recommended).
+
+### Download the Python dependencies
+
+The next step is to install Python and the Python dependencies. If using
+Anaconda,
+
+```
+conda install python
+pip install scipy
+pip install numpy
+pip install pytest
+```
 
 ## Build the python bindings
 
