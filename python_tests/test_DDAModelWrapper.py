@@ -31,3 +31,13 @@ def test_wrapper_objective():
     # This tests at the lower-level C++ API (not the wrapped API)
     model = _construct_test_model()
     objective_value = model.objective()
+    print("Objective, before update:", objective_value)
+    gradients = model.gradients(objective_value)
+    print("Gradients:", gradients)
+    parameters = model.parameters
+    print("Parameters, before update: ", parameters)
+    parameters = parameters + 0.1 * gradients
+    model.parameters = parameters
+    print("Parameters, after update: ", model.parameters)
+    new_objective = model.objective()
+    print("Objective, after update:", new_objective)

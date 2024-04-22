@@ -188,4 +188,5 @@ class DDAModelWrapper:
     @parameters.setter
     def parameters(self, value):
         # TODO: Shape / type conversion from input array.
-        self._model.setParameters(value)
+        filter_max_iteration = 1
+        self._model.setParameters(value, filter_max_iteration)
