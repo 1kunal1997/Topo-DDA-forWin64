@@ -152,7 +152,6 @@ class DDAModelWrapper:
             apc_method_name, pixel_size_nm,
             si, ci, sici_delta, verbose,
         )
-        self._previous_objective_value = None
 
     def objective(
         self,
