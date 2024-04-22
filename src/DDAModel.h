@@ -3,7 +3,7 @@
 
 #include "AProductCore.h"
 #include "ObjDDAModel.h"
-#include "filterOption.h"
+#include "FilterOption.h"
 
 #include <list>
 #include <vector>

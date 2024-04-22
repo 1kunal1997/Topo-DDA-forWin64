@@ -38,19 +38,19 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 ################################################################################
 set(ALL_SOURCES
     ${PROJECT_SOURCE_DIR}/src/AProductCore.cpp
-    ${PROJECT_SOURCE_DIR}/src/CoreStructure.cpp
+    # ${PROJECT_SOURCE_DIR}/src/CoreStructure.cpp
     ${PROJECT_SOURCE_DIR}/src/DDAModel.cpp
-    ${PROJECT_SOURCE_DIR}/src/EvoDDAModel.cpp
+    # ${PROJECT_SOURCE_DIR}/src/EvoDDAModel.cpp
     ${PROJECT_SOURCE_DIR}/src/FilterOption.cpp
-    ${PROJECT_SOURCE_DIR}/src/filterReader.cpp
-    ${PROJECT_SOURCE_DIR}/src/FOM.cpp
-    ${PROJECT_SOURCE_DIR}/src/main.cpp
+    # ${PROJECT_SOURCE_DIR}/src/filterReader.cpp
+    # ${PROJECT_SOURCE_DIR}/src/FOM.cpp
+    # ${PROJECT_SOURCE_DIR}/src/main.cpp
     ${PROJECT_SOURCE_DIR}/src/ObjDDAModel.cpp
-    ${PROJECT_SOURCE_DIR}/src/ObjReader.cpp
+    # ${PROJECT_SOURCE_DIR}/src/ObjReader.cpp
     ${PROJECT_SOURCE_DIR}/src/SiCi.cpp
-    ${PROJECT_SOURCE_DIR}/src/symReader.cpp
-    ${PROJECT_SOURCE_DIR}/src/tools.cpp
-    ${PROJECT_SOURCE_DIR}/src/kernel.cu
+    # ${PROJECT_SOURCE_DIR}/src/symReader.cpp
+    ${PROJECT_SOURCE_DIR}/src/Tools.cpp
+    ${PROJECT_SOURCE_DIR}/src/Kernel.cu
 )
 source_group("sources" FILES ${ALL_SOURCES})
 

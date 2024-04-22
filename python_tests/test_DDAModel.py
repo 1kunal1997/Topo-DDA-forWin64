@@ -100,5 +100,5 @@ def test_objective_calculation():
     bgs_max_iter = 100_000
     bgs_max_error = 1e-5
     # Must call .solveElectricField before calculating the objective.
-    model.solveElectricField(originPolarization, 100_000, 1e-5)
+    model.solveElectricField(origin_polarization, 100_000, 1e-5)
     objective_value = model.calculateObjective()

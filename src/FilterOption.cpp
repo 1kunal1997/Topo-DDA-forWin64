@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "Tools.h"
-#include "filterOption.h"
+#include "FilterOption.h"
 
 FilterOption::FilterOption(double beta_min_, double beta_max_, double ita_, string beta_type_, vector<filterinfo> rfilterlist_, bool fixit_, int MAX_ITERATION_FIXED_) {
 	beta_min = beta_min_;
