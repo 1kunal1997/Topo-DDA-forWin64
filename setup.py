@@ -125,10 +125,15 @@ class CMakeBuild(build_ext):
 
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
+package_location = "./python_bindings/"
+if os.name == "nt": 
+    # Windows paths use backslashes.
+    package_location = ".\\python_bindings\\"
+
 setup(
     name="dda_model",
     version="0.0.1",
-    packages=find_packages(where="./python_bindings/"),
+    packages=find_packages(where=package_location),
     package_dir={"": "python_bindings"},
     author="Ben Coleman",
     author_email="bcoleman2048@gmail.com",
