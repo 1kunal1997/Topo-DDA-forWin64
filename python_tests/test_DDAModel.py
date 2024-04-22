@@ -1,5 +1,6 @@
 import dda_model
 import numpy as np
+from scipy.special import sici
 import pytest
 
 
@@ -49,6 +50,12 @@ def _construct_test_model():
     apc_l_n = 22
     apc_method_name = "FCD"
 
+    # Cached integral values.
+    sici_delta = 0.1
+    sici_n = 1_000_000
+    integral_positions = np.linspace(sici_delta, sici_delta * sici_n, sici_n - 1)
+    si, ci = sici(integral_positions)
+
     ordered_parameters = {
         # Filter parameters.
         "filter_beta_min": filter_beta_min,
@@ -85,6 +92,10 @@ def _construct_test_model():
         "apc_l_n": apc_l_n,
         "apc_method_name": apc_method_name,
         "geo_pixel_size_nm": geo_pixel_size_nm,
+        # Sine and cosine integral values.
+        "sineIntegralValues": si,
+        "cosineIntegralValues": ci,
+        "integralDelta": sici_delta,
         "verbose": True,
     }
 
