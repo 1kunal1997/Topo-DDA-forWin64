@@ -876,16 +876,46 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR){
     std::complex<double> zeta;
 
     VectorXcd Ax0 = Aproductwithalb(P);
+
+    cout << "first 20 elements of Ax0 are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << Ax0(i) << " ";
+    }
+    cout << "\n";
     
     r = E-Ax0;
+
+    cout << "first 20 elements of r are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << r(i) << " ";
+    }
+    cout << "\n";
     r0 = r;
     p = r;
 
     VectorXcd Ap0 = Aproductwithalb(p);
+
+    cout << "first 20 elements of Ap0 are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << Ap0(i) << " ";
+    }
+    cout << "\n";
     alpha = r0.dot(r)/r0.dot(Ap0);
     t = r-alpha*Ap0;
 
+    cout << "first 20 elements of t are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << t(i) << " ";
+    }
+    cout << "\n";
+
     VectorXcd At0 = Aproductwithalb(t);
+
+    cout << "first 20 elements of At0 are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << At0(i) << " ";
+    }
+    cout << "\n";
     zeta = At0.dot(t)/At0.dot(At0);
     u = zeta*Ap0;
     z = zeta*r-alpha*u;
