@@ -45,7 +45,6 @@ private:
     int Ny;
     int Nz;
     double d;
-    // TODO: Fix this shit.
     // geometry_values is an internal copy of the geometry, while geometry is actually a 
     // pointer. This causes segfaults if it is called in python bindings or in some other
     // setting where the data can go out of scope after initialization finishes.

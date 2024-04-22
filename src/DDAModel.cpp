@@ -80,7 +80,6 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
     // this causes a dangling pointer, which leads to a segfault whenever the geometry is accessed next.
     // While the ideal solution would be to wrap an Eigen::Vector reference (so that we have only one copy of the matrix between python and cpp)
     // For now, we will just make DDAModel own its own geometry, so that the geometry pointer can point to the internal copy.
-    // TODO - Fix this piece of shit.
 
     Arguments:
         
@@ -145,8 +144,8 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         geometry_values(i) = (*geometry_)(i); // disgusting.
     }
     geometry = &geometry_values;
-    // cout<<"Geometry size: "<<geometry->size( )<<endl;
-    // cout<<"Geometry ptr: "<<geometry<<endl;
+    cout<<"Geometry size: "<<geometry->size( )<<endl;
+    cout<<"Geometry ptr: "<<geometry<<endl;
     // cout<<"Input ptr (will dangle): "<<geometry_<<endl;
     // cout << "Geometry values: ";
     // for (int i = 0; i < 30; i++){
@@ -180,7 +179,7 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
     }
 
     NFpara = int(round(( int(geometry->size( )) / 3 / Nz / dividesym )));    // number of free parameters. for extruded, symmetric, take one quadrant of one xy-plane of geo. 121 in standard case
-    cout << "NFpara" << NFpara << endl;
+    cout << "NFpara " << NFpara << endl;
 
     parameters = VectorXd::Zero(NFpara);
     geometryPara = VectorXi::Zero(N);
@@ -244,7 +243,7 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         vector<int> node{ ( *geometry ) ( 3 * pos ), ( *geometry ) ( 3 * pos + 1 ), ( *geometry ) ( 3 * pos + 2 ) };
         parameters(i) = Inputmap[ node ];
     }
-    cout << "para values:" << endl;
+    cout << "para values: " << endl;
 
     for ( int i = 0; i < parameters.size( ); i++ ) {
         cout << parameters(i) << " ";
@@ -295,7 +294,6 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
     material = Core->get_material( );
 
 
-    std::cout<<"Did some shady shit happen to object name? " << objName_ << endl;
     objDDAModel = ObjFactory(objName_, objPara_);
     RResultSwitch = false;
     RResult = *geometry;
