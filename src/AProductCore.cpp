@@ -475,6 +475,16 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
             bHos[index_imag] = b(3*i+j).imag();
         }
     }
+    cout << "first 20 elements of bHos in Aproduct are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << bHos[i] << " ";
+    }
+    cout << "\n";
+    cout << "first 20 elements of bDev in Aproduct are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << bDev[i] << " ";
+    }
+    cout << "\n";
     cudaMemcpy(bDev, bHos, sizeof(double)*2*3*NFFT, cudaMemcpyHostToDevice);
 
     B2Bs(bDev, bxDev, byDev, bzDev, NxFFT, NyFFT, NzFFT);
@@ -500,6 +510,16 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     }
     Conv2B(Convx, Convy, Convz, bDev, NxFFT, NyFFT, NzFFT);
     cudaMemcpy(bHos, bDev, sizeof(double)*2*3*NFFT, cudaMemcpyDeviceToHost);
+    cout << "first 20 elements of bHos (post-CUDA manipulations) in Aproduct are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << bHos[i] << " ";
+    }
+    cout << "\n";
+    cout << "first 20 elements of bDev (post-CUDA manipulations) in Aproduct are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << bDev[i] << " ";
+    }
+    cout << "\n";
     VectorXcd result(3*N);
     for(int i=0;i<=N-1;i++){
 
