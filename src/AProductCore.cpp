@@ -511,6 +511,17 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
             result(3*i+j)=(bHos[0+2*j+2*3*position] + bHos[1+2*j+2*3*position]*1.0i)/double(NFFT); // + b(3*i+j)*al(3*i+j)
         }
     }
+    cout << "first 20 elements of *R or geometry in Aproduct are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << (*R)(i) << " ";
+    }
+    cout << "\n";
+
+    cout << "first 20 elements of result in Aproduct are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << result(i) << " ";
+    }
+    cout << "\n";
     return result;
 
 }

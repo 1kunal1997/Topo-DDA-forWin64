@@ -321,7 +321,19 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         std::complex<double> diel_tmp = ( *material )( labelfloor ) + (dielectric_old( i ) - double(labelfloor) ) * ( ( *material )( labelnext ) - ( *material )( labelfloor ) );
         diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
+        
     }
+    cout << "first 20 elements of al in DDAModel constructor are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << al(i) << " ";
+    }
+    cout << "\n";
+
+    cout << "first 20 elements of diel in DDAModel constructor are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << diel(i) << " ";
+    }
+    cout << "\n";
 
     //cout << "al" << al(0) << endl;
 
@@ -1186,6 +1198,11 @@ VectorXcd DDAModel::Aproductwithalb(VectorXcd& b) {
     for (int i = 0; i <= al.size() - 1; i++) {
         result(i) = b(i) * al(i);
     }
+    cout << "first 20 elements of result inside Aproductwithalb are: " << endl;
+    for (int i = 0; i < 20; i++) {
+        cout << result(i) << " ";
+    }
+    cout << "\n";
     return (*Core).Aproduct(b, geometry) + result;
 }
 
