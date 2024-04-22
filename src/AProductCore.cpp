@@ -480,14 +480,43 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
         cout << bHos[i] << " ";
     }
     cout << "\n";
+
+    int num_debug = 20;
+    double* debug_buffer = new double[num_debug];
+    cudaMemcpy(bDev, debug_buffer, sizeof(double)*num_debug, cudaMemcpyDeviceToHost);
     cout << "first 20 elements of bDev in Aproduct are: " << endl;
-    for (int i = 0; i < 20; i++) {
-        cout << bDev[i] << " ";
+    for (int i = 0; i < num_debug; i++) {
+        cout << debug_buffer[i] << " ";
     }
     cout << "\n";
-    cudaMemcpy(bDev, bHos, sizeof(double)*2*3*NFFT, cudaMemcpyHostToDevice);
 
     B2Bs(bDev, bxDev, byDev, bzDev, NxFFT, NyFFT, NzFFT);
+
+    cudaMemcpy(bDev, debug_buffer, sizeof(double)*num_debug, cudaMemcpyDeviceToHost);
+    cout << "first 20 elements of bDev in Aproduct are: " << endl;
+    for (int i = 0; i < num_debug; i++) {
+        cout << debug_buffer[i] << " ";
+    }
+    cout << "\n";
+    cudaMemcpy(bxDev, debug_buffer, sizeof(double)*num_debug, cudaMemcpyDeviceToHost);
+    cout << "first 20 elements of bxDev in Aproduct are: " << endl;
+    for (int i = 0; i < num_debug; i++) {
+        cout << debug_buffer[i] << " ";
+    }
+    cout << "\n";
+    cudaMemcpy(byDev, debug_buffer, sizeof(double)*num_debug, cudaMemcpyDeviceToHost);
+    cout << "first 20 elements of byDev in Aproduct are: " << endl;
+    for (int i = 0; i < num_debug; i++) {
+        cout << debug_buffer[i] << " ";
+    }
+    cout << "\n";
+    cudaMemcpy(bzDev, debug_buffer, sizeof(double)*num_debug, cudaMemcpyDeviceToHost);
+    cout << "first 20 elements of bzDev in Aproduct are: " << endl;
+    for (int i = 0; i < num_debug; i++) {
+        cout << debug_buffer[i] << " ";
+    }
+    cout << "\n";
+
     if (cufftExecZ2Z(Plan, bxDev, bxDev, CUFFT_FORWARD) != CUFFT_SUCCESS){
 	        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
@@ -510,16 +539,13 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     }
     Conv2B(Convx, Convy, Convz, bDev, NxFFT, NyFFT, NzFFT);
     cudaMemcpy(bHos, bDev, sizeof(double)*2*3*NFFT, cudaMemcpyDeviceToHost);
+
     cout << "first 20 elements of bHos (post-CUDA manipulations) in Aproduct are: " << endl;
     for (int i = 0; i < 20; i++) {
         cout << bHos[i] << " ";
     }
     cout << "\n";
-    cout << "first 20 elements of bDev (post-CUDA manipulations) in Aproduct are: " << endl;
-    for (int i = 0; i < 20; i++) {
-        cout << bDev[i] << " ";
-    }
-    cout << "\n";
+
     VectorXcd result(3*N);
     for(int i=0;i<=N-1;i++){
 
