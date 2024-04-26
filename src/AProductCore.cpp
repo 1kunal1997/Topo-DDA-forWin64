@@ -5,9 +5,25 @@
 #include <iostream>
 #include <time.h>
 
+#include <stdio.h>
+
 #include "AProductCore.h"
 
 using namespace std::chrono;
+
+
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=false)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
+
+
 
 AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, VectorXd sineIntegralValues, VectorXd cosineIntegralValues, double integralDelta) {
     MAXm = MAXm_;
@@ -240,14 +256,14 @@ AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double 
         }
     }
 
-    cudaMalloc(( void** ) &ADev, sizeof(double) * 2 * 6 * NFFT);
-    cudaMemcpy(ADev, AHos, sizeof(double) * 2 * 6 * NFFT, cudaMemcpyHostToDevice);
-    cudaMalloc(( void** ) &A00, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &A01, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &A02, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &A11, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &A12, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &A22, sizeof(cufftDoubleComplex) * NFFT);
+    gpuErrchk( cudaMalloc(( void** ) &ADev, sizeof(double) * 2 * 6 * NFFT) );
+    gpuErrchk( cudaMemcpy(ADev, AHos, sizeof(double) * 2 * 6 * NFFT, cudaMemcpyHostToDevice));
+    gpuErrchk( cudaMalloc(( void** ) &A00, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &A01, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &A02, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &A11, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &A12, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &A22, sizeof(cufftDoubleComplex) * NFFT));
     A2As(ADev, A00, A01, A02, A11, A12, A22, NxFFT, NyFFT, NzFFT);
     high_resolution_clock::time_point t_init_end = high_resolution_clock::now( );
     auto duration = duration_cast< milliseconds >( t_init_end - t_init ).count( );
@@ -283,17 +299,17 @@ AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double 
 
     //b:
     bHos = new double[ 2 * 3 * NFFT ];
-    cudaMalloc(( void** ) &bDev, sizeof(double) * 2 * 3 * NFFT);
-    cudaMalloc(( void** ) &bxDev, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &byDev, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &bzDev, sizeof(cufftDoubleComplex) * NFFT);
+    gpuErrchk( cudaMalloc(( void** ) &bDev, sizeof(double) * 2 * 3 * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &bxDev, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &byDev, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk( cudaMalloc(( void** ) &bzDev, sizeof(cufftDoubleComplex) * NFFT));
 
 
 
     //Conv:
-    cudaMalloc(( void** ) &Convx, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &Convy, sizeof(cufftDoubleComplex) * NFFT);
-    cudaMalloc(( void** ) &Convz, sizeof(cufftDoubleComplex) * NFFT);
+    gpuErrchk( cudaMalloc(( void** ) &Convx, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk(cudaMalloc(( void** ) &Convy, sizeof(cufftDoubleComplex) * NFFT));
+    gpuErrchk(cudaMalloc(( void** ) &Convz, sizeof(cufftDoubleComplex) * NFFT));
 
 
 }
@@ -476,7 +492,7 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
         }
     }
 
-    cudaMemcpy(bDev, bHos, sizeof(double)*2*3*NFFT, cudaMemcpyHostToDevice);
+    gpuErrchk( cudaMemcpy(bDev, bHos, sizeof(double)*2*3*NFFT, cudaMemcpyHostToDevice));
 
     cout<<endl<<endl;
     cout<<"AProductCore: "<<endl;
@@ -487,7 +503,7 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
 
     int debug_size = 10;
     double* debug_buffer = new double[debug_size];
-    cudaMemcpy(bHos, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    gpuErrchk( cudaMemcpy(bHos, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost));
     cudaDeviceSynchronize();
     cout<<"bDev (bHos): "<<endl<<"\t";
     for (int i = 0; i < debug_size; i++) {
@@ -496,6 +512,8 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
 
 
     B2Bs(bDev, bxDev, byDev, bzDev, NxFFT, NyFFT, NzFFT);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
 
     cudaMemcpy(bxDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
@@ -527,6 +545,9 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     if (cufftExecZ2Z(Plan, bzDev, bzDev, CUFFT_FORWARD) != CUFFT_SUCCESS){
 	        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+
 
     cout<<"Post-FFT:"<<endl;
     cudaMemcpy(bxDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
@@ -551,6 +572,10 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     } cout<<endl;
 
     Conv(Convx, Convy, Convz, A00, A01, A02, A11, A12, A22, bxDev, byDev, bzDev, NxFFT, NyFFT, NzFFT);
+
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+
 
     cout<<"Post-Conv:"<<endl;
     cudaMemcpy(Convx, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
@@ -583,6 +608,9 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     if (cufftExecZ2Z(Plan, Convz, Convz, CUFFT_INVERSE) != CUFFT_SUCCESS){
 	        fprintf(stderr, "CUFFT error: ExecZ2Z Inverse failed");	
     }
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+
 
     cout<<"Post-IFFT-Conv:"<<endl;
     cudaMemcpy(Convx, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
@@ -608,7 +636,12 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
 
 
     Conv2B(Convx, Convy, Convz, bDev, NxFFT, NyFFT, NzFFT);
-    cudaMemcpy(bHos, bDev, sizeof(double)*2*3*NFFT, cudaMemcpyDeviceToHost);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+
+
+
+    gpuErrchk( cudaMemcpy(bHos, bDev, sizeof(double)*2*3*NFFT, cudaMemcpyDeviceToHost));
 
     cout<<"Output (bHos): "<<endl<<"\t";
     for (int i = 0; i < 20; i++) {
