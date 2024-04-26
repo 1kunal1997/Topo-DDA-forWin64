@@ -480,6 +480,11 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
 
     cout<<endl<<endl;
     cout<<"AProductCore: "<<endl;
+    cout<<"Input (bHos): "<<endl<<"\t";
+    for (int i = 0; i < 20; i++) {
+        cout<<bHos[i] << " ";
+    } cout<<endl;
+
     int debug_size = 10;
     double* debug_buffer = new double[debug_size];
     cudaMemcpy(bHos, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
@@ -546,6 +551,7 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     } cout<<endl;
 
     Conv(Convx, Convy, Convz, A00, A01, A02, A11, A12, A22, bxDev, byDev, bzDev, NxFFT, NyFFT, NzFFT);
+
     cout<<"Post-Conv:"<<endl;
     cudaMemcpy(Convx, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
@@ -577,8 +583,38 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
     if (cufftExecZ2Z(Plan, Convz, Convz, CUFFT_INVERSE) != CUFFT_SUCCESS){
 	        fprintf(stderr, "CUFFT error: ExecZ2Z Inverse failed");	
     }
+
+    cout<<"Post-IFFT-Conv:"<<endl;
+    cudaMemcpy(Convx, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"Convx: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(Convy, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"Convy: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(Convz, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"Convz: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+
     Conv2B(Convx, Convy, Convz, bDev, NxFFT, NyFFT, NzFFT);
     cudaMemcpy(bHos, bDev, sizeof(double)*2*3*NFFT, cudaMemcpyDeviceToHost);
+
+    cout<<"Output (bHos): "<<endl<<"\t";
+    for (int i = 0; i < 20; i++) {
+        cout<<bHos[i] << " ";
+    } cout<<endl;
+
     VectorXcd result(3*N);
     for(int i=0;i<=N-1;i++){
 
