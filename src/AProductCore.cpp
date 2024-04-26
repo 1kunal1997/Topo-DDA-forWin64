@@ -475,9 +475,44 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
             bHos[index_imag] = b(3*i+j).imag();
         }
     }
+
     cudaMemcpy(bDev, bHos, sizeof(double)*2*3*NFFT, cudaMemcpyHostToDevice);
 
+    cout<<endl<<endl;
+    cout<<"AProductCore: "<<endl;
+    int debug_size = 10;
+    double* debug_buffer = new double[debug_size];
+    cudaMemcpy(bHos, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"bDev (bHos): "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << "("<< bHos[i]<<") ";
+    } cout<<endl;
+
+
     B2Bs(bDev, bxDev, byDev, bzDev, NxFFT, NyFFT, NzFFT);
+
+    cudaMemcpy(bxDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"bxDev: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(byDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"byDev: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(bzDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"bzDev: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
     if (cufftExecZ2Z(Plan, bxDev, bxDev, CUFFT_FORWARD) != CUFFT_SUCCESS){
 	        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
@@ -488,7 +523,51 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b, VectorXi* R){
 	        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
 
+    cout<<"Post-FFT:"<<endl;
+    cudaMemcpy(bxDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"bxDev: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(byDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"byDev: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(bzDev, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"bzDev: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
     Conv(Convx, Convy, Convz, A00, A01, A02, A11, A12, A22, bxDev, byDev, bzDev, NxFFT, NyFFT, NzFFT);
+    cout<<"Post-Conv:"<<endl;
+    cudaMemcpy(Convx, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"Convx: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(Convy, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"Convy: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
+    cudaMemcpy(Convz, debug_buffer, sizeof(double)*debug_size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout<<"Convz: "<<endl<<"\t";
+    for (int i = 0; i < debug_size; i++) {
+        cout<<debug_buffer[i] << " ";
+    } cout<<endl;
+
     if (cufftExecZ2Z(Plan, Convx, Convx, CUFFT_INVERSE) != CUFFT_SUCCESS){
 	        fprintf(stderr, "CUFFT error: ExecZ2Z Inverse failed");	
     }
