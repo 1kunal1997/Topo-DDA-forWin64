@@ -9,24 +9,27 @@
 
 using namespace std::chrono;
 
-AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, VectorXd sineIntegralValues, VectorXd cosineIntegralValues, double integralDelta) {
+AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, VectorXd sineIntegralValues, VectorXd cosineIntegralValues, double integralDelta, bool verbose_) {
+    verbose = verbose_;
     MAXm = MAXm_;
     MAXn = MAXn_;
     Lm = Lm_;
     Ln = Ln_;
-    cout << "Calculating periodic sturcture, rep in x direction: " << MAXm << ", rep in y direction: " << MAXn << ". Lx: " << Lm << ", Ly: " << Ln << endl;
+    if (verbose){
+        cout << "Calculating periodic sturcture, rep in x direction: " << MAXm << ", rep in y direction: " << MAXn << ". Lx: " << Lm << ", Ly: " << Ln << endl;
+    }
     //CStr = CStr_;
     material = material_;
     nback = nback_;
     lam = lam_;
     K = 2.0 * M_PI / ( lam / nback );
     for ( int i = 0; i <= material.size( ) - 1; i++ ) {
-        cout << "origin i: " << i << " " << material(i) << endl;
+        if (verbose){cout << "origin i: " << i << " " << material(i) << endl;}
         material(i) = material(i) / ( nback * nback );
         if ( sqrt(norm(material(i))) < 1.01 ) {
             material(i) = material(i) + 0.01;
         }
-        cout << "divided i: " << i << " " << material(i) << endl;
+        if (verbose){cout << "divided i: " << i << " " << material(i) << endl;}
     }
     AMatrixMethod = AMatrixMethod_;
     if ( AMatrixMethod == "FCD" ) {
@@ -35,7 +38,7 @@ AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double 
         SiCiValue = new SiCi(sineIntegralValues, cosineIntegralValues, integralDelta);
     }
 
-    cout << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;
+    if (verbose){cout << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;}
     N = N_;
     int Nx = Nx_;
     int Ny = Ny_;
@@ -68,7 +71,7 @@ AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double 
                     }
                 }
 
-                if ( i == 2 && j == 2 && k == 0 ) {
+                if ((verbose) && ( i == 2 && j == 2 && k == 0 )) {
                     cout << "A: " << Atmp(0, 0) << "," << Atmp(0, 1) << "," << Atmp(0, 2) << endl;
                 }
 
@@ -251,33 +254,29 @@ AProductCore::AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double 
     A2As(ADev, A00, A01, A02, A11, A12, A22, NxFFT, NyFFT, NzFFT);
     high_resolution_clock::time_point t_init_end = high_resolution_clock::now( );
     auto duration = duration_cast< milliseconds >( t_init_end - t_init ).count( );
-    cout << "Cost " << duration << "ms to build and allocate A from host to device" << endl;
+    if (verbose){
+        cout << "Cost " << duration << "ms to build and allocate A from host to device" << endl;
+    }
 
     //FFT of As:
     if ( cufftExecZ2Z(Plan, A00, A00, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
-    cout << "A00 done" << endl;
     if ( cufftExecZ2Z(Plan, A01, A01, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
-    cout << "A01 done" << endl;
     if ( cufftExecZ2Z(Plan, A02, A02, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
-    cout << "A02 done" << endl;
     if ( cufftExecZ2Z(Plan, A11, A11, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
-    cout << "A11 done" << endl;
     if ( cufftExecZ2Z(Plan, A12, A12, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
-    cout << "A12 done" << endl;
     if ( cufftExecZ2Z(Plan, A22, A22, CUFFT_FORWARD) != CUFFT_SUCCESS ) {
         fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
     }
-    cout << "A22 done" << endl;
 
 
 

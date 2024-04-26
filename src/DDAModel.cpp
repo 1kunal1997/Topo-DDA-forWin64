@@ -28,7 +28,10 @@ ObjDDAModel* DDAModel::ObjFactory(string ObjectName, vector<double> ObjectParame
         return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, geometry, &al);
     }
 
-    cout << objName << " is not a legit objective name!" << endl;
+    if (verbose){
+        cout << "["<< objName << "] is not a supported objective name "
+             << "defaulting to [IntegratedE]" << endl;
+    }
     return new ObjIntegratedEDDAModel(ObjectParameters, N, &P, geometry, &al);
 }
 void FCurrentinsert(map<vector<int>, int>* FCurrent, vector<int> currentxy, int* currentpos, string insertmode, vector<double>* symaxis) {
@@ -132,9 +135,11 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         d_: size of pixel in nanometers.
 
     */
-
-    cout<<"Object name: " << objName_ << endl;
-    cout<<"betatype: " << betatype_ << endl;
+    verbose = verbose_;
+    if (verbose){
+        cout<<"Object name: " << objName_ << endl;
+        cout<<"betatype: " << betatype_ << endl;
+    }
 
     d = d_;
     Filter = Filter_;
@@ -144,14 +149,9 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         geometry_values(i) = (*geometry_)(i); // disgusting.
     }
     geometry = &geometry_values;
-    cout<<"Geometry size: "<<geometry->size( )<<endl;
-    cout<<"Geometry ptr: "<<geometry<<endl;
-    // cout<<"Input ptr (will dangle): "<<geometry_<<endl;
-    // cout << "Geometry values: ";
-    // for (int i = 0; i < 30; i++){
-    //     std::cout<<(*geometry)(i) << " ";
-    // } cout<<endl;
-    // cout<<"Geometry " << *geometry<<endl;
+    if (verbose){
+        cout<<"Geometry size: "<<geometry->size( )<<endl;
+    }
     Nx = Nx_;
     Ny = Ny_;
     Nz = Nz_;
@@ -179,7 +179,9 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
     }
 
     NFpara = int(round(( int(geometry->size( )) / 3 / Nz / dividesym )));    // number of free parameters. for extruded, symmetric, take one quadrant of one xy-plane of geo. 121 in standard case
-    cout << "NFpara " << NFpara << endl;
+    if (verbose) {
+        cout << "NFpara " << NFpara << endl;
+    }
 
     parameters = VectorXd::Zero(NFpara);
     geometryPara = VectorXi::Zero(N);
@@ -243,10 +245,12 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         vector<int> node{ ( *geometry ) ( 3 * pos ), ( *geometry ) ( 3 * pos + 1 ), ( *geometry ) ( 3 * pos + 2 ) };
         parameters(i) = Inputmap[ node ];
     }
-    cout << "para values: " << endl;
 
-    for ( int i = 0; i < parameters.size( ); i++ ) {
-        cout << parameters(i) << " ";
+    if (verbose) {
+        cout << "para values: " << endl;
+        for ( int i = 0; i < parameters.size( ); i++ ) {
+            cout << parameters(i) << " ";
+        } cout << endl;
     }
 
     if ( Filter == true ) {
@@ -274,7 +278,7 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
         dielectric_old(3 * i + 2) = dieltmp;
     }
 
-    Core = new AProductCore(Nx_, Ny_, Nz_, N_, d_, lam_, material_, nback_, MAXm_, MAXn_, Lm_ * d_, Ln_ * d_, AMatrixMethod_, sineIntegralValues_, cosineIntegralValues_, integralDelta_);
+    Core = new AProductCore(Nx_, Ny_, Nz_, N_, d_, lam_, material_, nback_, MAXm_, MAXn_, Lm_ * d_, Ln_ * d_, AMatrixMethod_, sineIntegralValues_, cosineIntegralValues_, integralDelta_, verbose_);
     time = 0;
     ITERATION = 0;
     Error = 0.0;
@@ -287,7 +291,9 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
     Ny = Ny_;
     Nz = Nz_;
     lam = lam_;
-    cout << "lam in DDAModel is: " << lam << endl;
+    if (verbose){
+        cout << "lam in DDAModel is: " << lam << endl;
+    }
     double nback = nback_;
     K = Core->get_K( );
     d = d_;
@@ -324,7 +330,6 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
     //cout << "al" << al(0) << endl;
 
     al_max = al;
-    verbose = verbose_;
 }
 
 DDAModel::~DDAModel( ) {
@@ -394,25 +399,32 @@ VectorXd DDAModel::calculateGradients(double epsilon_partial, double originalObj
 
     VectorXd gradients = VectorXd::Zero(NFpara);
 
-    cout << "about to start partial derivative part" << endl;
+    if (verbose){
+        cout << "Computing partial derivatives." << endl;
+        cout << "---------------------------START PARTIAL DERIVATIVE ----------------------" << endl;
+    }
 
     //----------------------------------------get partial derivative of current model---------------------------
     high_resolution_clock::time_point t1 = high_resolution_clock::now( );
-    cout << "---------------------------START PARTIAL DERIVATIVE ----------------------" << endl;
     VectorXd devx;
     VectorXcd Adevxp;
     VectorXcd devp;
     tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, originalObjValue);
     //tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, Model, objfunc, originalObjValue);
-    cout << "done with devx and adevxp, starting with devp" << endl;
+    if (verbose){
+        cout << "devx and adevxp finished, starting devp" << endl;
+    }
     devp = this->devp(epsilon_partial, originalObjValue);
-    cout << "done with devp, changing E using devp" << endl;
+    if (verbose){
+        cout << "done with devp, changing E using devp" << endl;
+    }
     high_resolution_clock::time_point t2 = high_resolution_clock::now( );
     auto duration = duration_cast< milliseconds >( t2 - t1 ).count( );
-    cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
-
+    if (verbose){
+        cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
+        cout << "---------------------------START ADJOINT PROBLEM ----------------------" << endl;
+    }
     //------------------------------------Solving adjoint problem-----------------------------------------
-    cout << "---------------------------START ADJOINT PROBLEM ----------------------" << endl;
 
     change_E(devp);
     VectorXcd Ptmp = VectorXcd::Zero(N * 3);
@@ -423,8 +435,9 @@ VectorXd DDAModel::calculateGradients(double epsilon_partial, double originalObj
     reset_E( );                                  //reset E to initial value
     //Adjointiterations << ( *Model ).get_ITERATION( ) << endl;
     //TotalAdjointIt += ( *Model ).get_ITERATION( );
-
-    cout << "D O N E!" << endl;
+    if (verbose) {
+        cout << "Done with adjoint problem." << endl;
+    }
     //times lambdaT and Adevxp together
     VectorXcd mult_result;
     mult_result = VectorXcd::Zero(NFpara);               //multiplication result has the length of parameter
@@ -441,7 +454,9 @@ VectorXd DDAModel::calculateGradients(double epsilon_partial, double originalObj
             it++;
         }
     }
-    cout << "D O N E!" << endl;
+    if (verbose) {
+        cout << "Done multiplying lambdaT and Adevxp." << endl;
+    }
     VectorXd mult_result_real = VectorXd::Zero(NFpara);
     for ( int i = 0; i <= NFpara - 1; i++ ) {
         complex<double> tmp = mult_result(i);
@@ -458,13 +473,12 @@ tuple<VectorXd, VectorXcd> DDAModel::devx_and_Adevxp(double epsilon, double orig
     VectorXcd Adevxp = VectorXcd::Zero(3 * N);
     VectorXd devx = VectorXd::Zero(NFpara);
 
-    cout << "NFpara is: " << NFpara << endl;
+    if (verbose){
+        cout << "NFpara is: " << NFpara << endl;
+    }
 
     for ( int i = 0; i < NFpara; i++ ) {
         int FreeParaPos = i;
-        if ( FreeParaPos != i ) {
-            cout << "----------------------------ERROR IN FREEPARAPOS!!--------------------------" << endl;
-        }
         double diel_old_origin = parameters(FreeParaPos);
         double diel_old_tmp = diel_old_origin;
         int sign = 0;
@@ -556,7 +570,10 @@ VectorXcd DDAModel::devp(double epsilon, double origin) {
 
         SingleResponse(position, false);
     }
-    cout << "Devp_sum: " << result.sum( ) << endl;
+
+    if (verbose) {
+        cout << "Devp_sum: " << result.sum( ) << endl;
+    }
     return result;
 }
 
@@ -694,8 +711,10 @@ void DDAModel::assignFreeWeightsForFilter( ) {
     }
 }
 
-void DDAModel::UpdateParameters(VectorXd step, int Max_it) {
-    cout << "step in UpdateStr: " << step.mean( ) << endl;
+void DDAModel::UpdateParameters(VectorXd step) {
+    if (verbose){
+        cout << "step in UpdateParameters: " << step.mean( ) << endl;
+    }
 
     int Parasize = parameters.size( );
     if ( Parasize != step.size( ) ) {
@@ -726,7 +745,9 @@ void DDAModel::UpdateParameters(VectorXd step, int Max_it) {
 }
 
 void DDAModel::UpdateStr(VectorXd step, int current_it, int Max_it) {
-    cout << "step in UpdateStr: " << step.mean( ) << endl;
+    if (verbose){
+        cout << "step in UpdateStr: " << step.mean( ) << endl;
+    }
 
     int Parasize = parameters.size( );
     if ( Parasize != step.size( ) ) {
@@ -747,8 +768,9 @@ void DDAModel::UpdateStr(VectorXd step, int current_it, int Max_it) {
                 Para_origin(i) = 0;
             }
         }
-
-        cout << "Beta at iteration " << current_it << " is " << Filterstats->get_beta( ) << endl;
+        if (verbose){
+            cout << "Beta at iteration " << current_it << " is " << Filterstats->get_beta( ) << endl;
+        }
 
         for ( int i = 0; i <= Parasize - 1; i++ ) {
             int weightnum = ( FreeWeight[ i ] ).size( );
@@ -989,8 +1011,6 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
     //Always starts with P=0 to avoid strange behaviour
     //P = VectorXcd::Zero(N * 3);
 
-    ofstream foutnew(".\\p330-lam542-beta8-TiO2-InE-circle-fordebug\\BUGINFO.txt");
-
     VectorXcd Ax0 = Aproductwithalb(P);
     r = E - Ax0;
     r0 = r;
@@ -1055,9 +1075,7 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
     }
     high_resolution_clock::time_point t_end = high_resolution_clock::now();
     time = duration_cast<milliseconds>(t_end - t_start).count();
-    cout << "                ERROR:does not converge in " << MAX_ITERATION << " iterations" << endl;
-
-    foutnew.close();
+    cout << "                ERROR: AProductCore did not converge in " << MAX_ITERATION << " iterations. Error was " << Error << endl;
     return;
 }
 

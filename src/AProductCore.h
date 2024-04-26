@@ -55,8 +55,11 @@ private:
     string AMatrixMethod;
     SiCi* SiCiValue;
 
+    // For logging.
+    bool verbose;
+
 public:
-    AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, VectorXd sineIntegralValues, VectorXd cosineIntegralValues, double integralDelta);
+    AProductCore(int Nx_, int Ny_, int Nz_, int N_, double d_, double lam_, VectorXcd material_, double nback_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_, VectorXd sineIntegralValues, VectorXd cosineIntegralValues, double integralDelta, bool verbose);
     ~AProductCore();
     Matrix3cd A_dic_generator(double x, double y, double z);
     Matrix3cd A_dic_generator(double x, double y, double z, int m, int n);

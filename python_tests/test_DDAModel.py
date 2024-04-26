@@ -2,6 +2,7 @@ import dda_model
 import numpy as np
 from scipy.special import sici
 import pytest
+import time
 
 
 def _construct_test_model():
@@ -96,7 +97,7 @@ def _construct_test_model():
         "sineIntegralValues": si,
         "cosineIntegralValues": ci,
         "integralDelta": sici_delta,
-        "verbose": True,
+        "verbose": False,
     }
 
     model = dda_model.DDAModel(*list(ordered_parameters.values()))
@@ -107,14 +108,16 @@ GLOBAL_MODEL = _construct_test_model()
 
 def test_objective_calculation():
     # This tests at the lower-level C++ API (not the wrapped API)
-    # model, parameters = _construct_test_model()
     model, parameters = GLOBAL_MODEL
     origin_polarization = [0 + 0j] * 3 * parameters["geo_ntotal"]
     # Numerical parameters for the bicongugate gradient stabilized method. 
     bgs_max_iter = 100_000
     bgs_max_error = 1e-5
     # Must call .solveElectricField before calculating the objective.
+    t_start = time.time()
     model.solveElectricField(origin_polarization, 100_000, 1e-5)
+    print(f"Took {time.time() - t_start:.3f} seconds to solve the E field.")
+    t_start = time.time()
     objective_value = model.calculateObjective()
     print("Objective Value is: " + str(objective_value))
 
@@ -131,25 +134,3 @@ def test_gradients_calculation():
     epsilon_partial = 0.001
     gradients = model.calculateGradients(epsilon_partial, objective_value, bgs_max_iter, bgs_max_error)
     print(gradients)
-    
-def AdamImplementation(epsilon, beta1, beta2, gradients, iteration):
-    epsilon_final = epsilon
-
-    print("Using Adam Optimizer.")
-    if iteration == 0:
-        V = (1 - beta1) * gradients / (1 - beta1**(iteration + 1))
-        S = (1 - beta2) * (np.power(gradients, 2)) / (1 - beta2**(iteration + 1))
-    else:
-        V = beta1 * V + (1 - beta1) * gradients / (1 - beta1**(iteration + 1))
-        S = beta2 * S + (1 - beta2) * (np.power(gradients, 2)) / (1 - beta2**(iteration + 1))
-
-    for i in range(gradients.size()):
-        gradients[i] = V[i] / (np.sqrt(S[i]) + 0.00000001)
-
-    if iteration <= 3:
-        epsilon_final = 0.1
-    else:
-        epsilon_final = epsilon
-
-
-
