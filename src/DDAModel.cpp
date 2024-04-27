@@ -1276,6 +1276,9 @@ double DDAModel::get_lam( ) {
 double DDAModel::get_d( ) {
     return d;
 }
+int DDAModel::get_NFpara() {
+    return NFpara;
+}
 VectorXi* DDAModel::get_geometry( ) {
     return geometry;
 }
@@ -1291,6 +1294,11 @@ VectorXd* DDAModel::get_parameters( ) {
 // Making this return a copy, temporarily, to get python bindings to work.
 VectorXd DDAModel::get_parameter_copy( ) {
     return parameters;
+}
+
+// Making this return a copy, temporarily, to get python bindings to work.
+VectorXd DDAModel::get_dielectrics_copy( ) {
+    return dielectric_old;
 }
 
 VectorXd* DDAModel::get_Para_origin( ) {

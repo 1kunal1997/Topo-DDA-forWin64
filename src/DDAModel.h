@@ -125,6 +125,7 @@ public:
     VectorXi* get_geometryPara( );
     VectorXd* get_parameters( );
     VectorXd get_parameter_copy( );
+    VectorXd get_dielectrics_copy();
     VectorXd* get_Para_origin( );
     VectorXd* get_Para_filtered( );
     bool get_Filter( );
@@ -149,6 +150,7 @@ public:
     double get_lam( );
     double get_d();
     VectorXi* get_geometry();
+    int get_NFpara();
 
 
     double get_beta( );

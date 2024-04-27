@@ -1,5 +1,6 @@
 import dda_model
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.special import sici
 import pytest
 
@@ -31,7 +32,9 @@ def _construct_test_model():
     geo_pixel_size_nm = 15.0
 
     # Dielectric (optimizable value) parameters.
-    dielectric_values = np.loadtxt("data/dielectrics.txt")
+    dielectric_values = np.loadtxt("data/hourglass.txt")
+    dielectric_values += np.random.uniform(0, 10e-6, size=dielectric_values.shape)
+    dielectric_values = np.clip(dielectric_values, 0, 1)
     dielectric_materials = [1.01 + 0j, 5.96282 + 3.80423e-7j]
 
     # Incident light wave parameters.
@@ -130,11 +133,11 @@ def test_gradients_calculation():
     objective_value = model.calculateObjective()    
     epsilon_partial = 0.001
     gradients = model.calculateGradients(epsilon_partial, objective_value, bgs_max_iter, bgs_max_error)
-    print(gradients)
+    print("the type of gradients is: " + str(type(gradients)))
     
 def AdamImplementation(epsilon, beta1, beta2, gradients, iteration):
     epsilon_final = epsilon
-
+    result = [0] * len(gradients)
     print("Using Adam Optimizer.")
     if iteration == 0:
         V = (1 - beta1) * gradients / (1 - beta1**(iteration + 1))
@@ -143,13 +146,108 @@ def AdamImplementation(epsilon, beta1, beta2, gradients, iteration):
         V = beta1 * V + (1 - beta1) * gradients / (1 - beta1**(iteration + 1))
         S = beta2 * S + (1 - beta2) * (np.power(gradients, 2)) / (1 - beta2**(iteration + 1))
 
-    for i in range(gradients.size()):
-        gradients[i] = V[i] / (np.sqrt(S[i]) + 0.00000001)
+    for i in range(len(gradients)):
+        result[i] = V[i] / (np.sqrt(S[i]) + 0.00000001)
 
     if iteration <= 3:
         epsilon_final = 0.1
     else:
         epsilon_final = epsilon
+
+    return epsilon_final, result
+
+def test_full_optimizer_loop():
+    # model, parameters = _construct_test_model()
+    model, parameters = GLOBAL_MODEL
+    origin_polarization = [0 + 0j] * 3 * parameters["geo_ntotal"]
+    # Numerical parameters for the bicongugate gradient stabilized method. 
+    bgs_max_iter = 100_000
+    evo_max_iter = 400
+    bgs_max_error = 1e-5
+    # epsilon = 0.1
+    # epsilon = 0.01 # This works better
+    epsilon = 0.1
+    beta1 = 0.9
+    beta2 = 1 - (1 - beta1) * (1 - beta1)
+    num_free_parameters = len(model.getParameters())
+    all_objective_values = [0] * evo_max_iter
+    V = np.zeros(num_free_parameters)
+    S = np.zeros(num_free_parameters)
+
+    for iteration in range(evo_max_iter):
+        print("---------------------------------------STARTING ITERATION " + str(iteration) + "------------------------------------------")
+
+        # Must call .solveElectricField before calculating the objective.
+        model.solveElectricField(origin_polarization, bgs_max_iter, bgs_max_error)
+        objective_value = model.calculateObjective()
+        print("Objective Value is: " + str(objective_value))
+
+        all_objective_values[iteration] = objective_value    
+        epsilon_partial = 0.001
+        gradients = model.calculateGradients(epsilon_partial, objective_value, bgs_max_iter, bgs_max_error)
+        #epsilon_final, gradients_final = AdamImplementation(epsilon, beta1, beta2, gradients, iteration)
+
+        print("Values for gradients are: ")
+        for j in range(num_free_parameters):
+            print(gradients[j], end=" ")
+            if (j%5 == 0):
+                print("")
+        print("")
+
+        all_parameters = model.getDielectrics()
+        '''
+        with open('E:\\Calculations\\DeviationsTest\\CoreStructure' + str(iteration) + '.txt', 'w') as f:
+            for para in all_parameters:
+                f.write(f"{para}\n")
+        '''
+
+        epsilon_final = epsilon
+        gradients_final = np.array(gradients)
+        print("Using Adam Optimizer.")
+        if iteration == 0:
+            V = (1 - beta1) * gradients / (1 - beta1**(iteration + 1))
+            S = (1 - beta2) * (np.power(gradients, 2)) / (1 - beta2**(iteration + 1))
+        else:
+            V = beta1 * V + (1 - beta1) * gradients / (1 - beta1**(iteration + 1))
+            S = beta2 * S + (1 - beta2) * (np.power(gradients, 2)) / (1 - beta2**(iteration + 1))
+
+        for i in range(len(gradients)):
+            gradients_final[i] = V[i] / (np.sqrt(S[i]) + 0.00000001)
+        
+        print("Values for V are: ")
+        for j in range(20):
+            print(V[j], end=" ")
+        print("")
+        print("Values of S are: ")
+        for j in range(20):
+            print(S[j], end=" ")
+        print("")
+        
+        if iteration <= 3:
+            epsilon_final = 0.1
+        else:
+            epsilon_final = epsilon
+
+        print("abs(gradients.cwiseAbs().mean() before: "  + str(np.abs(np.mean(np.abs(gradients_final)))))
+
+        if np.abs(np.mean(np.abs(gradients_final))) < 0.1:
+            gradients_final /= np.abs(np.mean(np.abs(gradients_final))) / 0.1
+        
+        print("abs(gradients.cwiseAbs().mean() after: "  + str(np.abs(np.mean(np.abs(gradients_final)))))
+
+        step = epsilon_final * gradients_final
+        model.setParameters(step, evo_max_iter - 1)
+    
+    plt.figure(1)
+    plt.plot(all_objective_values, label = 'E')
+    plt.legend(loc='lower right')
+    plt.title('Object Function Plot')
+    plt.ylabel('Object Function')
+    plt.xlabel('Iteration #')
+    plt.rc('axes', titlesize=14)     # fontsize of the axes title
+    plt.rc('axes', labelsize=12)    # fontsize of the x and y labels
+    plt.show()
+
 
 
 
