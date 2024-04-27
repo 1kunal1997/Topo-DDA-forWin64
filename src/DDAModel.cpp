@@ -142,8 +142,14 @@ DDAModel::DDAModel(double betamin_, double betamax_, double ita_, string betatyp
     geometry_values = VectorXi(geometry_->size());
     for (int i = 0; i < geometry_->size(); i++){
         geometry_values(i) = (*geometry_)(i); // disgusting.
+        //cout << geometry_values(i) << " ";
     }
+    //cout << "\n";
     geometry = &geometry_values;
+    for (int i = 0; i < geometry->size(); i+=3){
+        cout<< (*geometry)(i)<< " "<<(*geometry)(i+1)<<" "<<(*geometry)(i+2)<<endl;
+    }
+
     cout<<"Geometry size: "<<geometry->size( )<<endl;
     cout<<"Geometry ptr: "<<geometry<<endl;
     // cout<<"Input ptr (will dangle): "<<geometry_<<endl;
