@@ -1,6 +1,23 @@
 from ._dda_model import DDAModel
+
+import itertools
 import numpy as np
 from scipy.special import sici
+
+
+def _generate_geometry(num_x: int, num_y: int, num_z: int):
+    # Geometry is [x y z], major along the first dimension: 0 0 0, 1 0 0, 
+    # 2 0 0 ... num_x 0 0, 0 1 0, 1 1 0, ... 0 num_y 0 etc.
+    mesh = itertools.product(
+        list(range(num_z)),
+        list(range(num_y)),
+        list(range(num_x)),
+    )
+    geometry = np.array(list(mesh))
+    # Reverse indexing required for x-major.
+    geometry = geometry[:,::-1]
+    geometry = geometry.flatten().astype(int)
+    return geometry
 
 
 class DDAModelWrapper:
@@ -87,31 +104,20 @@ class DDAModelWrapper:
                             f"be 2-dimensional. Instead found {symmetry_axes}.")
         self._pixel_dimensions = num_pixels_xyz
         num_pixels_total = np.prod(self._pixel_dimensions)
-        # Geometry is [x y z], major along the first dimension: 0 0 0, 1 0 0, 
-        # 2 0 0 etc. We use np.meshgrid to obtain the correct values.
-        # https://stackoverflow.com/a/35608701
         num_x, num_y, num_z = num_pixels_xyz
-        mesh = np.meshgrid(
-            list(range(num_z)),
-            list(range(num_y)),
-            list(range(num_x)),
-        )
-        geometry = np.stack(mesh, -1).reshape(-1, 3)
-        # Reverse indexing required for x-major.
-        geometry = geometry[:,::-1]
-        geometry = geometry.flatten().astype(int)
+        geometry = _generate_geometry(num_x, num_y, num_z)
         # Objective configuration.
         if not integral_xbounds:
-            integral_xbounds = [0.0, float(num_x)]
+            integral_xbounds = [0.0, float(num_x) - 1]
         if not integral_ybounds:
-            integral_ybounds = [0.0, float(num_y)]
+            integral_ybounds = [0.0, float(num_y) - 1]
         if not integral_zbounds:
-            integral_zbounds = [0.0, float(num_z)]
+            integral_zbounds = [0.0, float(num_z) - 1]
         objective_config = [integral_power]
         objective_config += integral_xbounds
         objective_config += integral_ybounds
         objective_config += integral_zbounds
-        objective_config += [-1.0, -1.0]  # Unused filtering defaults.
+        objective_config += [0.95, 50.0]  # Unused filtering defaults.
         # Unused filtering default values.
         filter_beta_min = 0.0
         filter_beta_max = 50.0
