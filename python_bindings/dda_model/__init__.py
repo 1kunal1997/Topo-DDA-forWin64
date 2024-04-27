@@ -1,6 +1,23 @@
 from ._dda_model import DDAModel
+
+import itertools
 import numpy as np
 from scipy.special import sici
+
+
+def _generate_geometry(num_x: int, num_y: int, num_z: int):
+    # Geometry is [x y z], major along the first dimension: 0 0 0, 1 0 0, 
+    # 2 0 0 ... num_x 0 0, 0 1 0, 1 1 0, ... 0 num_y 0 etc.
+    mesh = itertools.product(
+        list(range(num_z)),
+        list(range(num_y)),
+        list(range(num_x)),
+    )
+    geometry = np.array(list(mesh))
+    # Reverse indexing required for x-major.
+    geometry = geometry[:,::-1]
+    geometry = geometry.flatten().astype(int)
+    return geometry
 
 
 class DDAModelWrapper:
@@ -87,19 +104,8 @@ class DDAModelWrapper:
                             f"be 2-dimensional. Instead found {symmetry_axes}.")
         self._pixel_dimensions = num_pixels_xyz
         num_pixels_total = np.prod(self._pixel_dimensions)
-        # Geometry is [x y z], major along the first dimension: 0 0 0, 1 0 0, 
-        # 2 0 0 etc. We use np.meshgrid to obtain the correct values.
-        # https://stackoverflow.com/a/35608701
         num_x, num_y, num_z = num_pixels_xyz
-        mesh = np.meshgrid(
-            list(range(num_z)),
-            list(range(num_y)),
-            list(range(num_x)),
-        )
-        geometry = np.stack(mesh, -1).reshape(-1, 3)
-        # Reverse indexing required for x-major.
-        geometry = geometry[:,::-1]
-        geometry = geometry.flatten().astype(int)
+        geometry = _generate_geometry(num_x, num_y, num_z)
         # Objective configuration.
         if not integral_xbounds:
             integral_xbounds = [0.0, float(num_x) - 1]
