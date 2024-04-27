@@ -37,3 +37,13 @@ def test_wrapper_objective():
     objective_value = model.objective()
     print(f"Took {time.time() - t_start:.3f} seconds to compute the objective.")
     print("Objective value:", objective_value)
+    assert objective_value == pytest.approx(11.005338768207627, 1e-4)
+
+def test_geometry_generator():
+    geometry_config = np.loadtxt("data/geometry.txt", dtype=int)
+    geometry_ground_truth = geometry_config[4:]
+    geo_nx, geo_ny, geo_nz, geo_ntotal = geometry_config[:4]
+    generated_geometry = dda_model._generate_geometry(geo_nx, geo_ny, geo_nz)
+    differences = (generated_geometry - geometry_ground_truth)**2
+    assert differences.sum() == pytest.approx(0.0, 1e-6)
+
