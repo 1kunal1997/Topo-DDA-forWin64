@@ -102,16 +102,16 @@ class DDAModelWrapper:
         geometry = geometry.flatten().astype(int)
         # Objective configuration.
         if not integral_xbounds:
-            integral_xbounds = [0.0, float(num_x)]
+            integral_xbounds = [0.0, float(num_x) - 1]
         if not integral_ybounds:
-            integral_ybounds = [0.0, float(num_y)]
+            integral_ybounds = [0.0, float(num_y) - 1]
         if not integral_zbounds:
-            integral_zbounds = [0.0, float(num_z)]
+            integral_zbounds = [0.0, float(num_z) - 1]
         objective_config = [integral_power]
         objective_config += integral_xbounds
         objective_config += integral_ybounds
         objective_config += integral_zbounds
-        objective_config += [-1.0, -1.0]  # Unused filtering defaults.
+        objective_config += [0.95, 50.0]  # Unused filtering defaults.
         # Unused filtering default values.
         filter_beta_min = 0.0
         filter_beta_max = 50.0
